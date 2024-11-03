@@ -28,17 +28,17 @@ def get_raw_image(batch_image):
     return batch_image * STD + MEAN
 
 def dump_heatmap(savepath, prefix, raw_image, atten_map, imgH, imgW, batch_index):
-    print('!!!! raw_image.shape:', raw_image.shape)  # torch.Size([20, 3, 224, 224])
-    print('!!!! atten_map.shape:', atten_map.shape)  # torch.Size([1, 1, 7, 7])
+    #print('!!!! raw_image.shape:', raw_image.shape)  # torch.Size([20, 3, 224, 224])
+    #print('!!!! atten_map.shape:', atten_map.shape)  # torch.Size([1, 1, 7, 7])
     rimg = ToPILImage(raw_image[batch_index])
     rimg.save(os.path.join(savepath, f'{prefix}_raw.png'))
 
     _attention_maps = functional.interpolate(
         atten_map, size=(imgH, imgW), mode='bilinear')
     _attention_maps = _attention_maps.cpu() / _attention_maps.max().item()
-    print('!!!! _attention_maps.shape:', _attention_maps.shape)  # torch.Size([1, 1, 224, 224])
+    #print('!!!! _attention_maps.shape:', _attention_maps.shape)  # torch.Size([1, 1, 224, 224])
     heat_attention_map = generate_heatmap(_attention_maps)
-    print('!!!! heat_attention_map.shape:', heat_attention_map.shape)  # torch.Size([1, 3, 224, 224])
+    #print('!!!! heat_attention_map.shape:', heat_attention_map.shape)  # torch.Size([1, 3, 224, 224])
 
     heat_attention_image = (raw_image * 0.3) + (heat_attention_map.cpu() * 0.7)
     himg = ToPILImage(heat_attention_image[batch_index])
