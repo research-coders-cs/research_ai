@@ -13,15 +13,13 @@ from torch import nn
 from transformers import PreTrainedModel, PretrainedConfig, AutoConfig, AutoModel
 from datasets import load_dataset
 from torch.utils.data import DataLoader
-
-import numpy as np
 from torchvision import transforms
-
 
 class CustomConfig(PretrainedConfig):
     model_type = "custom_model"
 
-    def __init__(self, hidden_size=256, num_hidden_layers=4, num_attention_heads=8, num_classes=10, **kwargs):
+    def __init__(self, hidden_size=256, num_hidden_layers=4, num_attention_heads=8, num_classes=10,
+                 **kwargs):
         super().__init__(**kwargs)
         self.hidden_size = hidden_size
         self.num_hidden_layers = num_hidden_layers
@@ -29,13 +27,20 @@ class CustomConfig(PretrainedConfig):
         self.num_classes = num_classes
 
 
+"""
+The Hugging Face `PreTrainedModel` is compatible with the "google/vit-base-patch16-224" model.
+This model is a Vision Transformer (ViT) pre-trained on ImageNet-21k and fine-tuned
+on ImageNet 2012 - https://huggingface.co/google/vit-base-patch16-224
+"""
 class CustomModel(PreTrainedModel):
     config_class = CustomConfig
 
     def __init__(self, config):
         super().__init__(config)
         self.embeddings = nn.Linear(28 * 28, config.hidden_size)
-        self.encoder = nn.ModuleList([nn.TransformerEncoderLayer(d_model=config.hidden_size, nhead=config.num_attention_heads) for _ in range(config.num_hidden_layers)])
+        self.encoder = nn.ModuleList([nn.TransformerEncoderLayer(
+            d_model=config.hidden_size,
+            nhead=config.num_attention_heads) for _ in range(config.num_hidden_layers)])
         self.classifier = nn.Linear(config.hidden_size, config.num_classes)
 
         self.init_weights()
@@ -89,7 +94,7 @@ def main():
     ##
 
     transform = transforms.Compose([
-        #----
+        #---- TODO
         #Resize((processor.size['height'], processor.size['width'])),
         # TODO organize the sizes
         #----
