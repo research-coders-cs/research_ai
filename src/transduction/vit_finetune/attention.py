@@ -36,15 +36,12 @@ def my_forward_wrapper(attn_obj):
 # https://www.kaggle.com/code/piantic/vision-transformer-vit-visualize-attention-map/notebook
 # https://www.kaggle.com/datasets/piantic/visiontransformerpytorch121/data
 #---- ^^ https://gist.github.com/zlapp/40126608b01a5732412da38277db9ff5
-def get_mask(im, att_mat):
-    # Average the attention weights across all heads.
-    # att_mat,_ = torch.max(att_mat, dim=1)
-    att_mat = torch.mean(att_mat, dim=1)
+def get_mask(im, ave_att_mat):
 
     # To account for residual connections, we add an identity matrix to the
     # attention matrix and re-normalize the weights.
-    residual_att = torch.eye(att_mat.size(1))
-    aug_att_mat = att_mat + residual_att
+    residual_att = torch.eye(ave_att_mat.size(1))
+    aug_att_mat = ave_att_mat + residual_att
     aug_att_mat = aug_att_mat / aug_att_mat.sum(dim=-1).unsqueeze(-1)
 
     # Recursively multiply the weight matrices
@@ -140,12 +137,30 @@ def verify_attentions(model, testds, y_true=None, y_pred=None, ckpt_file=None, s
             print('@@ logits:', logits)
             print('@@ type(attentions):', type(attentions))  # <class 'tuple'>
             for i, attn in enumerate(attentions):
-                print(f'@@ attn[{i}]: {attn.shape}')
+                print(f'@@ attn[{i}]: {attn.shape}')  # torch.Size([1, 12, 197, 197])
+                # [batch_size, num_heads, seq_len, seq_len]
+
+        #
+
+        att_mat = torch.cat(attentions).cpu()
+
+        #print(f'@@ att_mat.shape: {att_mat.shape}')
+        # torch.Size([12, 12, 197, 197])
+        #            [num_hidden_layers, num_heads, seq_len, seq_len]
+
+        # Average the attention weights across all heads.
+        # att_mat,_ = torch.max(att_mat, dim=1)
+        ave_att_mat = torch.mean(att_mat, dim=1)
+
+        #print(f'@@ ave_att_mat.shape: {ave_att_mat.shape}')
+        # torch.Size([12, 197, 197])
+        #            [num_hidden_layers, seq_len, seq_len]
 
         #
 
         im_mask, joint_attentions, grid_size = get_mask(
-            transform_to_pil(input.cpu()), torch.cat(attentions).cpu())
+            transform_to_pil(input.cpu()), ave_att_mat)
+        ##exit()  # !!!!
 
         #print(f'@@ testds[{idx}]: path={input_path}')
         im_input = plt.imread(input_path.split('?')[0])  # ndarray
