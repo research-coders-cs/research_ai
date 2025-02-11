@@ -156,6 +156,9 @@ Some weights of ViTForImageClassification were not initialized from the model ch
 You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
     """
     print('get_finetuned(): [after] ', model.classifier)
+    if 1:  # debug
+        print('get_finetuned(): model.config:', model.config)
+        ##exit()
 
     return model
 
@@ -399,7 +402,7 @@ def main():
     #----
     ckpt_saved = 'mri_trained_eps1_debug.ckpt'
 
-    if 11:
+    if 1:
         print('@@ using `ckpt_saved`:', ckpt_saved)
         model_dict = _load_ckpt(model, ckpt_saved)
         model.load_state_dict(model_dict)
