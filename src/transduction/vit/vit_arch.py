@@ -15,6 +15,8 @@ from datasets import load_dataset
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
+from ..vit_finetune.attention import get_mask##, verify_attentions
+
 class CustomConfig(PretrainedConfig):
     model_type = "custom_model"
 
@@ -45,13 +47,60 @@ class CustomModel(PreTrainedModel):
 
         self.init_weights()
 
+        if 1:  # debug
+            print('@@ config:', config)
+            ##exit()
+            # @@ config: CustomConfig {
+            #   "_attn_implementation_autoset": true,
+            #   "hidden_size": 256,
+            #   "model_type": "custom_model",
+            #   "num_attention_heads": 8,
+            #   "num_classes": 10,
+            #   "num_hidden_layers": 4,
+            #   "transformers_version": "4.48.1"
+            # }
+
+
     def forward(self, pixel_values):
         batch_size = pixel_values.shape[0]
         embeddings = self.embeddings(pixel_values.view(batch_size, -1))
         hidden_states = embeddings.unsqueeze(1)  # Add sequence dimension
 
+        attentions = []  # @@
+        #print('@@ hidden_states.shape:', hidden_states.shape)  # torch.Size([32, 1, 256])
+
         for layer in self.encoder:
             hidden_states = layer(hidden_states)
+
+            """@@
+            Since PyTorch's MultiheadAttention module does not provide direct access to
+            the attention weights, we need to modify the code to capture and return the
+            attention weights from within the forward() method.
+            """
+            #print('@@ type(layer):', type(layer))  # <class 'torch.nn.modules.transformer.TransformerEncoderLayer'>
+            multihead_attn = layer.self_attn  # the `MultiheadAttention` module -
+            # https://pytorch.org/docs/stable/generated/torch.nn.MultiheadAttention.html
+
+            # Use the `MultiheadAttention` module for computing self-attention.
+            x = hidden_states
+            attn_output, attn_weights = multihead_attn(x, x, x, need_weights=True)
+
+            #print('@@ !! attn_weights.shape:', attn_weights.shape)  # torch.Size([1, 32, 32])
+            # [ ] ?? why not [batch_size*num_heads, seq_len, seq_len]
+            #        already averaged over attention heads ??
+
+            attentions.append(attn_weights.detach().cpu())
+
+        ave_att_mat = torch.cat(attentions)  # stack over hidden layers
+        print('@@ !! ave_att_mat.shape:', ave_att_mat.shape)  # torch.Size([4, 32, 32])
+        exit()  # !!!! !!!!
+
+        # !!!!
+        im_mask, joint_attentions, grid_size = get_mask(
+            transform_to_pil(input.cpu()),  # !!!! WIP
+            ave_att_mat)
+
+        exit()  # !!!! !!!!
 
         logits = self.classifier(hidden_states.squeeze(1))  # Remove sequence dimension
 
@@ -88,8 +137,9 @@ def main():
 
     print('@@ vit arch !!')
 
-    AutoConfig.register("custom_model", CustomConfig)
-    AutoModel.register(CustomConfig, CustomModel)
+    if 0:  # CHECK needed ??
+        AutoConfig.register("custom_model", CustomConfig)
+        AutoModel.register(CustomConfig, CustomModel)
 
     ##
 
