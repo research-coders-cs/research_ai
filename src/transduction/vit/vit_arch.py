@@ -57,6 +57,10 @@ class CustomViT(nn.Module):
         pretrained_vit = ViTModel.from_pretrained(pretrained_model_name, output_attentions=True)
 
         # Channel adapter for 1-to-3 channel conversion
+        # Why
+        # - Full Pretrained Weights: The patch_embeddings layer retains all RGB-specific information from "google/vit-base-patch16-224", avoiding the loss of detail from averaging.
+        # - Learnable Adapter: The channel_adapter learns during fine-tuning to optimally map MNIST’s grayscale to a 3-channel space that the pretrained patch_embeddings can process, enhancing feature extraction.
+        # - Consistency: Matches the original ViT input pipeline more closely, leveraging ImageNet-pretrained capabilities.
         self.channel_adapter = nn.Conv2d(
             in_channels=1,
             out_channels=3,
@@ -139,13 +143,14 @@ def main():
     if 1:  # @@ dev
         #====
         len_train, len_test = 600, 100
-# @@ Epoch: 1
-# Epoch 1, Loss: 2.0140535831451416
-# @@ Epoch: 2
-# Epoch 2, Loss: 0.9587066173553467
-# @@ Epoch: 3
-# Epoch 3, Loss: 0.820209264755249
-# Accuracy: 75.0%
+# Epoch 1/3, Average Loss: 2.3594
+# Epoch 2/3, Average Loss: 1.7799
+# Epoch 3/3, Average Loss: 1.5676
+# Model saved to custom_vit_mnist.pth
+# Test Accuracy: 52.00%
+# real	28m31.262s
+# user	47m44.966s
+# sys	2m3.947s
         #====
         #len_train, len_test = 6000, 1000
 # @@ Epoch: 1
@@ -171,8 +176,7 @@ def main():
     ##
 
     train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-#    test_dataloader = DataLoader(test_dataset, batch_size=32)
-    test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)  # !!!!!!!!!!
+    test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
     ##
 
@@ -181,41 +185,71 @@ def main():
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-2)
     loss_fn = nn.CrossEntropyLoss()
 
-    epoch_n = 3
-    model.train()
-    for epoch in range(epoch_n):
-        epoch_loss = 0.0
-        for batch in train_dataloader:
-            pixels, labels = batch
-            pixels, labels = pixels.to(device), labels.to(device)
-            optimizer.zero_grad()
-            outputs = model(pixels)
-            loss = loss_fn(outputs, labels)
-            loss.backward()
-            optimizer.step()
-            epoch_loss += loss.item()
-        print(f"Epoch {epoch+1}/{epoch_n}, Average Loss: {epoch_loss / len(train_dataloader):.4f}")
+    DO_TRAINING = 0
+    MODEL_PATH = "custom_vit_mnist.pth"  # Path to save/load model
+
+    # Training loop (optional)
+    if DO_TRAINING:
+        epoch_n = 3
+        model.train()
+
+        for epoch in range(epoch_n):
+            epoch_loss = 0.0
+            for batch in train_dataloader:
+                pixels, labels = batch
+                pixels, labels = pixels.to(device), labels.to(device)
+                optimizer.zero_grad()
+                outputs = model(pixels)
+                loss = loss_fn(outputs, labels)
+                loss.backward()
+                optimizer.step()
+                epoch_loss += loss.item()
+            print(f"Epoch {epoch+1}/{epoch_n}, Average Loss: {epoch_loss / len(train_dataloader):.4f}")
+
+        torch.save(model.state_dict(), MODEL_PATH)
+        print(f"Model saved to {MODEL_PATH}")
+    else:
+        print("Skipping training...")
+
+    if not DO_TRAINING:
+        try:
+            model.load_state_dict(torch.load(MODEL_PATH))
+            print(f"Model loaded from {MODEL_PATH}")
+        except FileNotFoundError:
+            print(f"Error: No saved model found at {MODEL_PATH}. Please train first.")
+            exit(1)
 
     ##
 
     model.eval()
+
+    if 0:  # Evaluation loop
+        correct = 0
+        total = 0
+        with torch.no_grad():
+            for batch in test_dataloader:
+                pixels, labels = batch
+                pixels, labels = pixels.to(device), labels.to(device)
+                outputs = model(pixels)
+                _, predicted = torch.max(outputs, 1)
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
+        print(f"Test Accuracy: {100 * correct / total:.2f}%")
+
+
+    # Optional: Inference with attention debugging
     with torch.no_grad():
         for batch in test_dataloader:
             pixels, labels = batch
             pixels, labels = pixels.to(device), labels.to(device)
-
             logits, attentions = model(pixels, output_attentions=True)
-            predicted_class = logits.argmax(-1).item()
-            print(f"Predicted: {predicted_class}, True: {labels.item()}")
-
-            # Debug attention
-            print(f"Number of attention layers: {len(attentions)}")  # Should be 4
+            predicted_class = logits.argmax(-1)[0].item()
+            print(f"Predicted: {predicted_class}, True: {labels[0].item()}")
+            print(f"Number of attention layers: {len(attentions)}")
             for i, attn in enumerate(attentions):
-                print(f"Layer {i+1} attention shape: {attn.shape}")  # (1, 12, 197, 197)
+                print(f"Layer {i+1} attention shape: {attn.shape}")  # torch.Size([32, 12, 197, 197])
                 print(f"CLS attention to first 5 patches: {attn[0, 0, 0, :5]}")
-
             break  # !!!!
-
 
 
 if __name__ == "__main__":
