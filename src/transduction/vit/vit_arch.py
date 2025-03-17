@@ -6,7 +6,7 @@
 import torch
 from torch import nn
 from datasets import load_dataset
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision import transforms
 from ..vit_finetune.attention import get_mask, generate_attention_heatmap##, verify_attentions
 
@@ -99,9 +99,6 @@ class CustomViT(nn.Module):
         return logits
 
 
-#-------- ^^
-from torch.utils.data import Dataset, random_split
-
 class CustomDataset(Dataset):
     def __init__(self, ds, transform=None):
         # @@ ds: Dataset({
@@ -122,7 +119,6 @@ class CustomDataset(Dataset):
             image = self.transform(image)
 
         return image, label
-#-------- $$
 
 
 def main():
@@ -177,7 +173,7 @@ def main():
 
     train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
     test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=False)
-    test_dataloader_bs1 = DataLoader(test_dataset, batch_size=1, shuffle=False)
+    test_dataloader_bs1 = DataLoader(test_dataset, batch_size=1, shuffle=False)  # for attention debug
 
     ##
 
