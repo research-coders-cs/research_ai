@@ -113,6 +113,20 @@ class CustomViT(nn.Module):
                 epoch_loss += loss.item()
             print(f"Epoch {epoch+1}/{epoch_n}, Average Loss: {epoch_loss / len(train_dataloader):.4f}")
 
+    @staticmethod
+    def do_test(model, device, test_dataloader):
+        correct = 0
+        total = 0
+        with torch.no_grad():
+            for batch in test_dataloader:
+                pixels, labels = batch
+                pixels, labels = pixels.to(device), labels.to(device)
+                outputs = model(pixels)
+                _, predicted = torch.max(outputs, 1)
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
+        print(f"Test Accuracy: {100 * correct / total:.2f}%")
+
 
 class CustomDataset(Dataset):
     def __init__(self, ds, transform=None):
@@ -219,18 +233,7 @@ def main():
     model.eval()
 
     if 0:  # Evaluation loop
-        correct = 0
-        total = 0
-        with torch.no_grad():
-            for batch in test_dataloader:
-                pixels, labels = batch
-                pixels, labels = pixels.to(device), labels.to(device)
-                outputs = model(pixels)
-                _, predicted = torch.max(outputs, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
-        print(f"Test Accuracy: {100 * correct / total:.2f}%")
-
+        CustomViT.do_test(model, device, test_dataloader)
 
     # Optional: Inference with attention debugging
     with torch.no_grad():
