@@ -98,6 +98,21 @@ class CustomViT(nn.Module):
             return logits, encoder_outputs.attentions
         return logits
 
+    @staticmethod
+    def do_train(model, device, optimizer, loss_fn, epoch_n, train_dataloader):
+        for epoch in range(epoch_n):
+            epoch_loss = 0.0
+            for batch in train_dataloader:
+                pixels, labels = batch
+                pixels, labels = pixels.to(device), labels.to(device)
+                optimizer.zero_grad()
+                outputs = model(pixels)
+                loss = loss_fn(outputs, labels)
+                loss.backward()
+                optimizer.step()
+                epoch_loss += loss.item()
+            print(f"Epoch {epoch+1}/{epoch_n}, Average Loss: {epoch_loss / len(train_dataloader):.4f}")
+
 
 class CustomDataset(Dataset):
     def __init__(self, ds, transform=None):
@@ -179,36 +194,19 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = CustomViT(num_classes=10, num_hidden_layers=4).to(device)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-2)
-    loss_fn = nn.CrossEntropyLoss()
-
-    DO_TRAINING = 0
     MODEL_PATH = "custom_vit_mnist.pth"  # Path to save/load model
 
-    # Training loop (optional)
-    if DO_TRAINING:
+    if 1:  # do training?
+        optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-2)
+        loss_fn = nn.CrossEntropyLoss()
+
         epoch_n = 3
         model.train()
-
-        for epoch in range(epoch_n):
-            epoch_loss = 0.0
-            for batch in train_dataloader:
-                pixels, labels = batch
-                pixels, labels = pixels.to(device), labels.to(device)
-                optimizer.zero_grad()
-                outputs = model(pixels)
-                loss = loss_fn(outputs, labels)
-                loss.backward()
-                optimizer.step()
-                epoch_loss += loss.item()
-            print(f"Epoch {epoch+1}/{epoch_n}, Average Loss: {epoch_loss / len(train_dataloader):.4f}")
+        CustomViT.do_train(model, device, optimizer, loss_fn, epoch_n, train_dataloader)
 
         torch.save(model.state_dict(), MODEL_PATH)
         print(f"Model saved to {MODEL_PATH}")
     else:
-        print("Skipping training...")
-
-    if not DO_TRAINING:
         try:
             model.load_state_dict(torch.load(MODEL_PATH))
             print(f"Model loaded from {MODEL_PATH}")
