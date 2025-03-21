@@ -80,6 +80,7 @@ class CustomViT(nn.Module):
 
         self.classifier = nn.Linear(self.pretrained_config.hidden_size, num_classes)
 
+    # override
     def forward(self, pixel_values, output_attentions=False):
         batch_size = pixel_values.shape[0]
 
@@ -98,30 +99,28 @@ class CustomViT(nn.Module):
             return logits, encoder_outputs.attentions
         return logits
 
-    @staticmethod
-    def do_train(model, device, optimizer, loss_fn, epoch_n, train_dataloader):
+    def xx_train(self, device, optimizer, loss_fn, epoch_n, train_dataloader):
         for epoch in range(epoch_n):
             epoch_loss = 0.0
             for batch in train_dataloader:
                 pixels, labels = batch
                 pixels, labels = pixels.to(device), labels.to(device)
                 optimizer.zero_grad()
-                outputs = model(pixels)
+                outputs = self(pixels)
                 loss = loss_fn(outputs, labels)
                 loss.backward()
                 optimizer.step()
                 epoch_loss += loss.item()
             print(f"Epoch {epoch+1}/{epoch_n}, Average Loss: {epoch_loss / len(train_dataloader):.4f}")
 
-    @staticmethod
-    def do_test(model, device, test_dataloader):
+    def xx_test(self, device, test_dataloader):
         correct = 0
         total = 0
         with torch.no_grad():
             for batch in test_dataloader:
                 pixels, labels = batch
                 pixels, labels = pixels.to(device), labels.to(device)
-                outputs = model(pixels)
+                outputs = self(pixels)
                 _, predicted = torch.max(outputs, 1)
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
@@ -216,7 +215,7 @@ def main():
 
         epoch_n = 3
         model.train()
-        CustomViT.do_train(model, device, optimizer, loss_fn, epoch_n, train_dataloader)
+        model.xx_train(device, optimizer, loss_fn, epoch_n, train_dataloader)
 
         torch.save(model.state_dict(), MODEL_PATH)
         print(f"Model saved to {MODEL_PATH}")
@@ -233,8 +232,9 @@ def main():
     model.eval()
 
     if 0:  # Evaluation loop
-        CustomViT.do_test(model, device, test_dataloader)
+        model.xx_test(device, test_dataloader)
 
+    # !!!!
     # Optional: Inference with attention debugging
     with torch.no_grad():
         for batch in test_dataloader_bs1:
