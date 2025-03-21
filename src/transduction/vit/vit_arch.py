@@ -166,31 +166,28 @@ def main():
 
     if 1:  # @@ dev
         #====
-        len_train, len_test = 600, 100
-# Epoch 1/3, Average Loss: 2.3594
-# Epoch 2/3, Average Loss: 1.7799
-# Epoch 3/3, Average Loss: 1.5676
-# Model saved to custom_vit_mnist.pth
-# Test Accuracy: 52.00%
-# real	28m31.262s
-# user	47m44.966s
-# sys	2m3.947s
+        len_train, len_test = 60, 10  # 0.1%; for dev iter
         #====
-        #len_train, len_test = 6000, 1000
-# @@ Epoch: 1
-# Epoch 1, Loss: 0.5430163145065308
-# @@ Epoch: 2
-# Epoch 2, Loss: 0.1401258111000061
-# @@ Epoch: 3
-# Epoch 3, Loss: 0.48536649346351624
-# Accuracy: 88.3%
+        #len_train, len_test = 6000, 1000  # 10%
+        """ vit_arch_mri_v1.ipynb
+Epoch 1/8, Average Loss: 1.4045
+Epoch 2/8, Average Loss: 0.8155
+Epoch 3/8, Average Loss: 0.5848
+Epoch 4/8, Average Loss: 0.4377
+Epoch 5/8, Average Loss: 0.3257
+Epoch 6/8, Average Loss: 0.2456
+Epoch 7/8, Average Loss: 0.2265
+Epoch 8/8, Average Loss: 0.1638
+Model saved to custom_vit_mnist.pth
+Test Accuracy: 87.50%
+        """
         #====
 
         train_dataset, _ = random_split(train_dataset, [len_train, len(train_dataset) - len_train])
         test_dataset, _ = random_split(test_dataset, [len_test, len(test_dataset) - len_test])
         print('@@ !! train/test dataset shortened')
     else:
-        pass  # 60000, 10000
+        pass  # 60000, 10000  # 100%
 
     print('@@ len(train_dataset):', len(train_dataset))
     print('@@ len(test_dataset):', len(test_dataset))
@@ -209,14 +206,15 @@ def main():
     device = torch.device(device_str)
     model = CustomViT(num_classes=10, num_hidden_layers=4).to(device)
 
-#    MODEL_PATH = "custom_vit_mnist.pth"
+    # MODEL_PATH = "custom_vit_mnist.pth"
     MODEL_PATH = "custom_vit_mnist--10pct-8eps.pth"
 
     if 0:  # do training?
         optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-2)
         loss_fn = nn.CrossEntropyLoss()
 
-        epoch_n = 3
+        epoch_n = 8
+
         model.train()
         model.xx_train(device, optimizer, loss_fn, epoch_n, train_dataloader)
 
