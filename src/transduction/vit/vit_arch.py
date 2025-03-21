@@ -205,11 +205,14 @@ def main():
 
     ##
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device_str = "cuda" if torch.cuda.is_available() else "cpu"
+    device = torch.device(device_str)
     model = CustomViT(num_classes=10, num_hidden_layers=4).to(device)
-    MODEL_PATH = "custom_vit_mnist.pth"  # Path to save/load model
 
-    if 1:  # do training?
+#    MODEL_PATH = "custom_vit_mnist.pth"
+    MODEL_PATH = "custom_vit_mnist--10pct-8eps.pth"
+
+    if 0:  # do training?
         optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-2)
         loss_fn = nn.CrossEntropyLoss()
 
@@ -221,7 +224,7 @@ def main():
         print(f"Model saved to {MODEL_PATH}")
     else:
         try:
-            model.load_state_dict(torch.load(MODEL_PATH))
+            model.load_state_dict(torch.load(MODEL_PATH, map_location=torch.device(device_str)))
             print(f"Model loaded from {MODEL_PATH}")
         except FileNotFoundError:
             print(f"Error: No saved model found at {MODEL_PATH}. Please train first.")
@@ -231,8 +234,8 @@ def main():
 
     model.eval()
 
-    if 0:  # Evaluation loop
-        model.xx_test(device, test_dataloader)
+    model.xx_test(device, test_dataloader)
+    exit()  # !!!!
 
     # !!!!
     # Optional: Inference with attention debugging
