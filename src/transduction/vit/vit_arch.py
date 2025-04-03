@@ -157,7 +157,7 @@ from ..plot_if import get_plt, plt_imshow
 plt = get_plt()
 # !!!! $$
 
-def process_bs1_attn(pixels, attentions):
+def process_bs1_attn(pixels, attentions, i_batch, interactive=False):
     for i, attn in enumerate(attentions):
         print(f"Layer {i+1} attention shape: {attn.shape}")  # torch.Size([1, 12, 197, 197])
         # 1 samples, 12 heads (from ViT-Base), 197 tokens (1 CLS + 196 patches).
@@ -202,8 +202,12 @@ def process_bs1_attn(pixels, attentions):
     #plt_imshow(plt, im_mask)  # debug
 
     im_heatmap = transform_to_pil(generate_attention_heatmap(im_input, im_mask))
-    im_heatmap.save(f'debug_heat_attention_fwd.png')  # !!!!
-    plt_imshow(plt, im_heatmap)  # debug !!!!
+    if interactive:
+        plt_imshow(plt, im_heatmap)
+    else:
+        fname = f'bs1_attn_heatmap_{i_batch}.png'
+        print(f'saving {fname}')
+        im_heatmap.save(fname)
 
 
 def main():
@@ -211,16 +215,17 @@ def main():
     print('@@ vit arch !!')
 
     if 1:  # !!!!
-        debug_attn = torch.load('bs1_attn/bs1_attn_0.pt')  # !!!! to glob
-        pixels = debug_attn['pixels']
-        true = debug_attn['true']
-        pred = debug_attn['pred']
-        attentions = debug_attn['attentions']
+        for i_batch in range(10):  # !!!! hardcoded
+            debug_attn = torch.load(f'bs1_attn/bs1_attn_{i_batch}.pt')
+            pixels = debug_attn['pixels']
+            true = debug_attn['true']
+            pred = debug_attn['pred']
+            attentions = debug_attn['attentions']
 
-        print(f"Predicted: {pred}, True: {true}")
-        print(f"Number of attention layers: {len(attentions)}")
+            print(f"Predicted: {pred}, True: {true}")
+            print(f"Number of attention layers: {len(attentions)}")
 
-        process_bs1_attn(pixels, attentions)
+            process_bs1_attn(pixels, attentions, i_batch)
         exit()
 
     ##
@@ -319,13 +324,14 @@ Test Accuracy: 87.50%
             print(f"Predicted: {predicted_class}, True: {labels[0].item()}")
             print(f"Number of attention layers: {len(attentions)}")
 
-            if 0:  # collect 'bs1_attn_N.pt'
+            if 0:
+                print(f'saving bs1_attn_{i_batch}.pt')
                 torch.save({'pixels': pixels,
                             'true': labels[0].item(),
                             'pred': predicted_class,
                             'attentions': attentions}, f'bs1_attn_{i_batch}.pt')
-
-            process_bs1_attn(pixels, attentions)
+            else:
+                process_bs1_attn(pixels, attentions, i_batch, interactive=True)
 
 
 if __name__ == "__main__":
