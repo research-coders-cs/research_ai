@@ -232,19 +232,28 @@ Test Accuracy: 87.50%
 
     model.eval()
 
-    model.xx_test(device, test_dataloader)
-    exit()  # !!!!
+    if 0:
+        print(f"Testing with `test_dataloader`...")
+        model.xx_test(device, test_dataloader)
+        exit()
 
-    # !!!!
     # Optional: Inference with attention debugging
     with torch.no_grad():
-        for batch in test_dataloader_bs1:
+        for i_batch, batch in enumerate(test_dataloader_bs1):
             pixels, labels = batch
             pixels, labels = pixels.to(device), labels.to(device)
+            #print(f"pixels, labels: {pixels.shape}, {labels.shape}")  # torch.Size([1, 1, 224, 224]), torch.Size([1])
+
             logits, attentions = model(pixels, output_attentions=True)
             predicted_class = logits.argmax(-1)[0].item()
             print(f"Predicted: {predicted_class}, True: {labels[0].item()}")
             print(f"Number of attention layers: {len(attentions)}")
+
+            if 1:  # collect 'debug_attn_N.pt'
+                torch.save({'pixels': pixels,
+                            'true': labels[0].item(),
+                            'pred': predicted_class,
+                            'attentions': attentions}, f'debug_attn_{i_batch}.pt')
 
             for i, attn in enumerate(attentions):
                 print(f"Layer {i+1} attention shape: {attn.shape}")  # torch.Size([1, 12, 197, 197])
