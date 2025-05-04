@@ -157,7 +157,7 @@ from ..plot_if import get_plt, plt_imshow
 plt = get_plt()
 # !!!! $$
 
-def process_bs1_attn(pixels, attentions, i_batch, interactive=False):
+def process_bs1_attn(pixels, attentions, i_batch):
     for i, attn in enumerate(attentions):
         print(f"Layer {i+1} attention shape: {attn.shape}")  # torch.Size([1, 12, 197, 197])
         # 1 samples, 12 heads (from ViT-Base), 197 tokens (1 CLS + 196 patches).
@@ -186,42 +186,35 @@ def process_bs1_attn(pixels, attentions, i_batch, interactive=False):
     att_mat = torch.cat(attentions).cpu()
     #print(f'@@ att_mat.shape: {att_mat.shape}')  # torch.Size([4, 12, 197, 197]); num_hidden_layers, num_heads, seq_len, seq_len
 
-    # Average the attention weights across all heads.
-    ave_att_mat = torch.mean(att_mat, dim=1)
-    #print(f'@@ ave_att_mat.shape: {ave_att_mat.shape}')  # torch.Size([4, 197, 197]); num_hidden_layers, seq_len, seq_len
-
-    #print('@@ !! pixels.shape:', pixels.shape)  # torch.Size([1, 1, 224, 224])
+    #print('@@ (bs1) pixels.shape:', pixels.shape)  # torch.Size([1, 1, 224, 224])
     input = pixels.cpu()[0, 0, :, :]  # (224, 224)
 
-    im_mask, joint_attentions, grid_size = get_mask(
-        transform_to_pil(input.cpu()), ave_att_mat)
-    print('@@ !! im_mask.shape:', im_mask.shape)  # (224, 224)
+    compute_bs1_attn_heatmap(input, att_mat, i_batch)  # averaged across all heads
+    for i_head in range(att_mat.shape[1]):
+        compute_bs1_attn_heatmap(input, att_mat, i_batch, i_head)
+
+
+def compute_bs1_attn_heatmap(input, att_mat, i_batch, i_head=None):
+    if i_head is None:
+        # Average the attention weights across all heads.
+        head_att_mat = torch.mean(att_mat, dim=1)  # torch.Size([4, 197, 197]); num_hidden_layers, seq_len, seq_len
+        tag = 'ave'
+    else:
+        head_att_mat = att_mat[:, i_head, :, :]  # Shape: [4, 197, 197], {i_head}_head_attention
+        tag = f'{i_head}'
+
+    im_mask, _, _ = get_mask(transform_to_pil(input), head_att_mat)
+    #plt_imshow(plt, im_mask)  # debug (im_mask.shape: (224, 224))
 
     im_input = np.stack((input.numpy(),) * 3, axis=-1)  # (224, 224, 3)
     #plt_imshow(plt, im_input)  # debug
-    #plt_imshow(plt, im_mask)  # debug
 
-    #====
-    # im_heatmap = transform_to_pil(generate_attention_heatmap(im_input, im_mask))
-    # if interactive:
-    #     plt_imshow(plt, im_heatmap)
-    # else:
-    #     fname = f'bs1_attn_heatmap_{i_batch}.png'
-    #     print(f'saving {fname}')
-    #     im_heatmap.save(fname)
-    #==== !!!!
-    for i_head in range(12):  # !!!!
-        ave_att_mat = att_mat[:, i_head, :, :]  # Shape: [4, 197, 197], {i_head}_head_attention
+    im_heatmap = transform_to_pil(generate_attention_heatmap(im_input, im_mask))
+    fname = f'bs1_attn_heatmap_batch_{i_batch}_head_{tag}.png'
+    #plt_imshow(plt, im_heatmap)
 
-        im_mask, _, _ = get_mask(
-            transform_to_pil(input.cpu()), ave_att_mat)
-
-        im_heatmap = transform_to_pil(generate_attention_heatmap(im_input, im_mask))
-        fname = f'bs1_attn_heatmap_{i_batch}_head_{i_head}.png'
-
-        print(f'saving {fname}')
-        im_heatmap.save(fname)
-    #---- $$
+    print(f'saving {fname}')
+    im_heatmap.save(fname)
 
 
 def main():
@@ -349,7 +342,7 @@ Test Accuracy: 87.50%
                             'pred': predicted_class,
                             'attentions': attentions}, f'bs1_attn_{i_batch}.pt')
             else:
-                process_bs1_attn(pixels, attentions, i_batch, interactive=True)
+                process_bs1_attn(pixels, attentions, i_batch)
 
 
 if __name__ == "__main__":
