@@ -201,13 +201,27 @@ def process_bs1_attn(pixels, attentions, i_batch, interactive=False):
     #plt_imshow(plt, im_input)  # debug
     #plt_imshow(plt, im_mask)  # debug
 
-    im_heatmap = transform_to_pil(generate_attention_heatmap(im_input, im_mask))
-    if interactive:
-        plt_imshow(plt, im_heatmap)
-    else:
-        fname = f'bs1_attn_heatmap_{i_batch}.png'
+    #====
+    # im_heatmap = transform_to_pil(generate_attention_heatmap(im_input, im_mask))
+    # if interactive:
+    #     plt_imshow(plt, im_heatmap)
+    # else:
+    #     fname = f'bs1_attn_heatmap_{i_batch}.png'
+    #     print(f'saving {fname}')
+    #     im_heatmap.save(fname)
+    #==== !!!!
+    for i_head in range(12):  # !!!!
+        ave_att_mat = att_mat[:, i_head, :, :]  # Shape: [4, 197, 197], {i_head}_head_attention
+
+        im_mask, _, _ = get_mask(
+            transform_to_pil(input.cpu()), ave_att_mat)
+
+        im_heatmap = transform_to_pil(generate_attention_heatmap(im_input, im_mask))
+        fname = f'bs1_attn_heatmap_{i_batch}_head_{i_head}.png'
+
         print(f'saving {fname}')
         im_heatmap.save(fname)
+    #---- $$
 
 
 def main():
@@ -225,7 +239,11 @@ def main():
             print(f"Predicted: {pred}, True: {true}")
             print(f"Number of attention layers: {len(attentions)}")
 
-            process_bs1_attn(pixels, attentions, i_batch)
+            #process_bs1_attn(pixels, attentions, i_batch)
+            #==== !!!!
+            if i_batch == 7:
+                process_bs1_attn(pixels, attentions, i_batch)
+                break  # !!!!
         exit()
 
     ##
