@@ -157,6 +157,30 @@ from ..plot_if import get_plt, plt_imshow
 plt = get_plt()
 # !!!! $$
 
+def save_bs1_attn(pixels, logits, attentions, i_batch):
+    pred = logits.argmax(-1)[0].item()
+    true = labels[0].item()
+    print(f"Predicted: {pred}, True: {true}")
+
+    print(f'saving bs1_attn_{i_batch}.pt')  # ~7.3MB
+    torch.save({'pixels': pixels,
+                'true': true,
+                'pred': pred,
+                'attentions': attentions}, f'bs1_attn_{i_batch}.pt')
+
+def load_bs1_attn(pt_file_path):
+    debug_attn = torch.load(pt_file_path)  # ~7.3MB
+    pixels = debug_attn['pixels']
+    true = debug_attn['true']
+    pred = debug_attn['pred']
+    attentions = debug_attn['attentions']
+
+    print(f"Predicted: {pred}, True: {true}")
+    print(f"Number of attention layers: {len(attentions)}")
+
+    return pixels, attentions
+
+
 def process_bs1_attn(pixels, attentions, i_batch):
     for i, attn in enumerate(attentions):
         print(f"Layer {i+1} attention shape: {attn.shape}")  # torch.Size([1, 12, 197, 197])
@@ -190,6 +214,7 @@ def process_bs1_attn(pixels, attentions, i_batch):
     input = pixels.cpu()[0, 0, :, :]  # (224, 224)
 
     compute_bs1_attn_heatmap(input, att_mat, i_batch)  # averaged across all heads
+
     for i_head in range(att_mat.shape[1]):
         compute_bs1_attn_heatmap(input, att_mat, i_batch, i_head)
 
@@ -223,20 +248,9 @@ def main():
 
     if 1:  # !!!!
         for i_batch in range(10):  # !!!! hardcoded
-            debug_attn = torch.load(f'bs1_attn/bs1_attn_{i_batch}.pt')
-            pixels = debug_attn['pixels']
-            true = debug_attn['true']
-            pred = debug_attn['pred']
-            attentions = debug_attn['attentions']
+            pixels, attentions = load_bs1_attn(f'bs1_attn/bs1_attn_{i_batch}.pt')  # ~7.3MB
+            process_bs1_attn(pixels, attentions, i_batch)
 
-            print(f"Predicted: {pred}, True: {true}")
-            print(f"Number of attention layers: {len(attentions)}")
-
-            #process_bs1_attn(pixels, attentions, i_batch)
-            #==== !!!!
-            if i_batch == 7:
-                process_bs1_attn(pixels, attentions, i_batch)
-                break  # !!!!
         exit()
 
     ##
@@ -331,16 +345,10 @@ Test Accuracy: 87.50%
             #print(f"pixels, labels: {pixels.shape}, {labels.shape}")  # torch.Size([1, 1, 224, 224]), torch.Size([1])
 
             logits, attentions = model(pixels, output_attentions=True)
-            predicted_class = logits.argmax(-1)[0].item()
-            print(f"Predicted: {predicted_class}, True: {labels[0].item()}")
             print(f"Number of attention layers: {len(attentions)}")
 
             if 0:
-                print(f'saving bs1_attn_{i_batch}.pt')
-                torch.save({'pixels': pixels,
-                            'true': labels[0].item(),
-                            'pred': predicted_class,
-                            'attentions': attentions}, f'bs1_attn_{i_batch}.pt')
+                save_bs1_attn(pixels, logits, attentions, i_batch)
             else:
                 process_bs1_attn(pixels, attentions, i_batch)
 
