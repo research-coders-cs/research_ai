@@ -154,7 +154,7 @@ def main():
 
     print('@@ vit arch !!')
 
-    if 1:  # debug
+    if 0:  # debug
         for i_batch in range(10):  # first 10 batches
             pixels, attentions = Bs1Atten.load(f'bs1_attn/bs1_attn_{i_batch}.pt')  # ~7.3MB
             Bs1Atten.process(pixels, attentions, i_batch)
@@ -256,7 +256,7 @@ Test Accuracy: 87.50%
             print(f"Number of attention layers: {len(attentions)}")
 
             if 0:
-                Bs1Atten.save(pixels, logits, attentions, i_batch)
+                Bs1Atten.save(pixels, labels, logits, attentions, i_batch)  # e.g. 'bs1_attn/*'
             else:
                 Bs1Atten.process(pixels, attentions, i_batch)
 

@@ -10,7 +10,7 @@ from ..vit_finetune.attention import get_mask, generate_attention_heatmap
 class Bs1Atten:
 
     @staticmethod
-    def save(pixels, logits, attentions, i_batch):
+    def save(pixels, labels, logits, attentions, i_batch):
         pred = logits.argmax(-1)[0].item()
         true = labels[0].item()
         print(f"Predicted: {pred}, True: {true}")
