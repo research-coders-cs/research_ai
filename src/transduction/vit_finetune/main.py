@@ -224,6 +224,7 @@ def get_confusion_matrix(y_true, y_pred, class_names_sorted):
         plt_imshow(plt, fname)
 
 
+from ..vit.bs1_atten import Bs1Atten
 def verify_attentions(model, testds, y_true=None, y_pred=None, ckpt_file=None, save_dir='inference'):
     print(f'@@ verify_attentions(): ^^ len(testds): {len(testds)}')
 
@@ -272,26 +273,13 @@ def verify_attentions(model, testds, y_true=None, y_pred=None, ckpt_file=None, s
 
         #---- Compute heatmaps
 
-        if 1:  # !!!! 111 previous
-            from .attention import get_mask, generate_attention_heatmap
+        # averaged across all attention heads
+        im_heatmap, im_mask = Bs1Atten.compute_heatmap(
+            input, att_mat, idx, i_head=None, im_orig=im_orig)
 
-            # Average the attention weights across all heads.
-            # att_mat,_ = torch.max(att_mat, dim=1)
-            ave_att_mat = torch.mean(att_mat, dim=1)  # torch.Size([12, 197, 197]) [num_hidden_layers, seq_len, seq_len]
-
-            im_mask, joint_attentions, grid_size = get_mask(
-                transform_to_pil(input), ave_att_mat)
-
-            im_heatmap = transform_to_pil(generate_attention_heatmap(im_orig, im_mask))
-
-        if 1:  # !!!! 111 WIP adapt with `Bs1Atten.process()`
-            from ..vit.bs1_atten import Bs1Atten
-
-            # averaged across all heads
-            Bs1Atten.compute_heatmap(input, att_mat, idx, i_head=None, im_orig=im_orig)
-
-            for i_head in range(att_mat.shape[1]):
-                Bs1Atten.compute_heatmap(input, att_mat, idx, i_head=i_head, im_orig=im_orig)
+        num_heads = att_mat.shape[1]
+        heatmaps_headwise = [ Bs1Atten.compute_heatmap(
+            input, att_mat, idx, i_head=i_head, im_orig=im_orig)[0] for i_head in range(num_heads) ]
 
         #---- Display inference debug
 
@@ -312,6 +300,12 @@ def verify_attentions(model, testds, y_true=None, y_pred=None, ckpt_file=None, s
                      f'(ViT model: {ckpt_file})')
             plot_attention([im_orig, im_mask, im_heatmap], title,
                 f'{save_dir}/attention_debug_{idx}_{ckpt_file}.png')
+
+        # !!!! 2222
+        plot_attention(heatmaps_headwise[:int(num_heads/2)], 'title!!',
+                f'{save_dir}/heads_AA_{idx}_result_{result}.png')
+        plot_attention(heatmaps_headwise[int(num_heads/2):], 'title!!',
+                f'{save_dir}/heads_BB_{idx}_result_{result}.png')
 
 
 def debug_print_dat(dat):

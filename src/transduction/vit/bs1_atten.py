@@ -98,3 +98,5 @@ class Bs1Atten:
 
         print(f'saving {fname}')
         im_heatmap.save(fname)
+
+        return im_heatmap, im_mask
