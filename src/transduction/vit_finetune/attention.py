@@ -125,13 +125,19 @@ def verify_attentions(model, testds, y_true=None, y_pred=None, ckpt_file=None, s
     for idx, x in enumerate(testds):
         #print(idx, x['img'], x['label'], x['pixels'].shape)
 
-        input = x['pixels']
+        input = x['pixels']  # # torch.Size([3, 224, 224])
         input_path = x['img']
-        #print('@@ input.shape:', input.shape)  # torch.Size([3, 224, 224])
 
-        outputs = model(input.to(device).unsqueeze(0), output_attentions=True)
+        #---- Compute attentions per `input`
+
+        outputs = model(
+            input.to(device).unsqueeze(0),  # --> [1, 3, 224, 224] ([batch_size, channels, height, width])
+            output_attentions=True)
         logits = outputs.logits
         attentions = outputs.attentions
+
+        input = input.cpu()[0, :, :]  # --> torch.Size([224, 224])
+        att_mat = torch.cat(attentions).cpu()  # torch.Size([12, 12, 197, 197]) [num_hidden_layers, num_heads, seq_len, seq_len]
 
         if 0:
             print('@@ logits:', logits)
@@ -140,27 +146,7 @@ def verify_attentions(model, testds, y_true=None, y_pred=None, ckpt_file=None, s
                 print(f'@@ attn[{i}]: {attn.shape}')  # torch.Size([1, 12, 197, 197])
                 # [batch_size, num_heads, seq_len, seq_len]
 
-        #
-
-        att_mat = torch.cat(attentions).cpu()
-
-        #print(f'@@ att_mat.shape: {att_mat.shape}')
-        # torch.Size([12, 12, 197, 197])
-        #            [num_hidden_layers, num_heads, seq_len, seq_len]
-
-        # Average the attention weights across all heads.
-        # att_mat,_ = torch.max(att_mat, dim=1)
-        ave_att_mat = torch.mean(att_mat, dim=1)
-
-        #print(f'@@ ave_att_mat.shape: {ave_att_mat.shape}')
-        # torch.Size([12, 197, 197])
-        #            [num_hidden_layers, seq_len, seq_len]
-
-        #
-
-        im_mask, joint_attentions, grid_size = get_mask(
-            transform_to_pil(input.cpu()), ave_att_mat)
-        ##exit()  # !!!!
+        #---- Resolve `im_orig`
 
         #print(f'@@ testds[{idx}]: path={input_path}')
         im_input = plt.imread(input_path.split('?')[0])  # ndarray
@@ -174,16 +160,31 @@ def verify_attentions(model, testds, y_true=None, y_pred=None, ckpt_file=None, s
             elif 'erica=r' in input_path:
                 im_input = im_erica_r
 
-        im_orig = cv2.resize(im_input, im_mask.shape)
+        im_orig = cv2.resize(im_input, input.shape)
         #print('@@ im_orig.shape:', im_orig.shape)  # (224, 224, 3)
 
-        im_heatmap = transform_to_pil(generate_attention_heatmap(im_orig, im_mask))
+        #---- Compute heatmaps
 
-        if 0:
-            im_heatmap.save(f'debug_heat_attention_{idx}.png')
-            exit()  # !!
+        if 1:  # !!!! previous
+            # Average the attention weights across all heads.
+            # att_mat,_ = torch.max(att_mat, dim=1)
+            ave_att_mat = torch.mean(att_mat, dim=1)  # torch.Size([12, 197, 197]) [num_hidden_layers, seq_len, seq_len]
 
-        #
+            im_mask, joint_attentions, grid_size = get_mask(
+                transform_to_pil(input), ave_att_mat)
+
+            im_heatmap = transform_to_pil(generate_attention_heatmap(im_orig, im_mask))
+
+        if 1:  # !!!! WIP adapt with `Bs1Atten.process()`
+            from ..vit.bs1_atten import Bs1Atten
+
+            # averaged across all heads
+            Bs1Atten.compute_heatmap(input, att_mat, idx, i_head=None, im_orig=im_orig)
+
+            for i_head in range(att_mat.shape[1]):
+                Bs1Atten.compute_heatmap(input, att_mat, idx, i_head=i_head, im_orig=im_orig)
+
+        #---- Display inference debug
 
         if erica_mode:
             ytrue = y_true[idx] if y_true is not None else None

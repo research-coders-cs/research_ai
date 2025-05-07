@@ -66,7 +66,7 @@ class Bs1Atten:
         #print(f'@@ att_mat.shape: {att_mat.shape}')  # torch.Size([4, 12, 197, 197]); num_hidden_layers, num_heads, seq_len, seq_len
 
         #print('@@ (bs1) pixels.shape:', pixels.shape)  # torch.Size([1, 1, 224, 224])
-        input = pixels.cpu()[0, 0, :, :]  # (224, 224)
+        input = pixels.cpu()[0, 0, :, :]  # torch.Size([224, 224])
 
         Bs1Atten.compute_heatmap(input, att_mat, i_batch)  # averaged across all heads
 
@@ -75,7 +75,7 @@ class Bs1Atten:
 
 
     @staticmethod
-    def compute_heatmap(input, att_mat, i_batch, i_head=None):
+    def compute_heatmap(input, att_mat, i_batch, i_head=None, im_orig=None):
         if i_head is None:
             # Average the attention weights across all heads.
             head_att_mat = torch.mean(att_mat, dim=1)  # torch.Size([4, 197, 197]); num_hidden_layers, seq_len, seq_len
@@ -87,10 +87,12 @@ class Bs1Atten:
         im_mask, _, _ = get_mask(transform_to_pil(input), head_att_mat)
         #plt_imshow(plt, im_mask)  # debug (im_mask.shape: (224, 224))
 
-        im_input = np.stack((input.numpy(),) * 3, axis=-1)  # (224, 224, 3)
-        #plt_imshow(plt, im_input)  # debug
+        if im_orig is None:
+            # Restoring from `pixels`, could be visually affected by proprocessing
+            im_orig = np.stack((input.numpy(),) * 3, axis=-1)  # (224, 224, 3)
+        #plt_imshow(plt, im_orig)  # debug
 
-        im_heatmap = transform_to_pil(generate_attention_heatmap(im_input, im_mask))
+        im_heatmap = transform_to_pil(generate_attention_heatmap(im_orig, im_mask))
         fname = f'bs1_attn_heatmap_batch_{i_batch}_head_{tag}.png'
         #plt_imshow(plt, im_heatmap)
 
