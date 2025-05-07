@@ -2,13 +2,9 @@ import torch
 import numpy as np
 import cv2
 
-from torchvision.transforms import ToPILImage
-transform_to_pil = ToPILImage()
-
-from ..plot_if import get_plt, plt_imshow
+from ..plot_if import get_plt
 plt = get_plt()
 
-from ..vit.vit_torch import MriDataset
 
 
 # FYI
@@ -115,91 +111,3 @@ def plot_attention(ims, title, save_path):
     plt.axis('off')
     plt.setp(axes, xticks=[], yticks=[])
     plt.savefig(save_path, bbox_inches='tight')
-
-
-def verify_attentions(model, testds, y_true=None, y_pred=None, ckpt_file=None, save_dir='inference'):
-    print(f'@@ verify_attentions(): ^^ len(testds): {len(testds)}')
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    for idx, x in enumerate(testds):
-        #print(idx, x['img'], x['label'], x['pixels'].shape)
-
-        input = x['pixels']  # # torch.Size([3, 224, 224])
-        input_path = x['img']
-
-        #---- Compute attentions per `input`
-
-        outputs = model(
-            input.to(device).unsqueeze(0),  # --> [1, 3, 224, 224] ([batch_size, channels, height, width])
-            output_attentions=True)
-        logits = outputs.logits
-        attentions = outputs.attentions
-
-        input = input.cpu()[0, :, :]  # --> torch.Size([224, 224])
-        att_mat = torch.cat(attentions).cpu()  # torch.Size([12, 12, 197, 197]) [num_hidden_layers, num_heads, seq_len, seq_len]
-
-        if 0:
-            print('@@ logits:', logits)
-            print('@@ type(attentions):', type(attentions))  # <class 'tuple'>
-            for i, attn in enumerate(attentions):
-                print(f'@@ attn[{i}]: {attn.shape}')  # torch.Size([1, 12, 197, 197])
-                # [batch_size, num_heads, seq_len, seq_len]
-
-        #---- Resolve `im_orig`
-
-        #print(f'@@ testds[{idx}]: path={input_path}')
-        im_input = plt.imread(input_path.split('?')[0])  # ndarray
-        #plt_imshow(plt, im_input)
-
-        erica_mode = 'erica=' in input_path
-        if erica_mode:
-            im_erica_l, im_erica_r = MriDataset.erica_crop_im(im_input)
-            if 'erica=l' in input_path:
-                im_input = im_erica_l
-            elif 'erica=r' in input_path:
-                im_input = im_erica_r
-
-        im_orig = cv2.resize(im_input, input.shape)
-        #print('@@ im_orig.shape:', im_orig.shape)  # (224, 224, 3)
-
-        #---- Compute heatmaps
-
-        if 1:  # !!!! previous
-            # Average the attention weights across all heads.
-            # att_mat,_ = torch.max(att_mat, dim=1)
-            ave_att_mat = torch.mean(att_mat, dim=1)  # torch.Size([12, 197, 197]) [num_hidden_layers, seq_len, seq_len]
-
-            im_mask, joint_attentions, grid_size = get_mask(
-                transform_to_pil(input), ave_att_mat)
-
-            im_heatmap = transform_to_pil(generate_attention_heatmap(im_orig, im_mask))
-
-        if 1:  # !!!! WIP adapt with `Bs1Atten.process()`
-            from ..vit.bs1_atten import Bs1Atten
-
-            # averaged across all heads
-            Bs1Atten.compute_heatmap(input, att_mat, idx, i_head=None, im_orig=im_orig)
-
-            for i_head in range(att_mat.shape[1]):
-                Bs1Atten.compute_heatmap(input, att_mat, idx, i_head=i_head, im_orig=im_orig)
-
-        #---- Display inference debug
-
-        if erica_mode:
-            ytrue = y_true[idx] if y_true is not None else None
-            ypred = y_pred[idx] if y_pred is not None else None
-            result = ytrue == ypred if (ytrue is not None and ypred is not None) else None
-            title = (f'testds[{idx}] (erica_[l,r]) | attention_mask_{idx} | heat_attention_{idx}\n'
-                     f'(path: {input_path})\n'
-                     f'(ytrue: {ytrue} ypred: {ypred} inference result: {result})\n'
-                     f'(ViT model: {ckpt_file})')
-
-            plot_attention([im_erica_l, im_erica_r, im_mask, im_heatmap], title,
-                f'{save_dir}/info_testds_{idx}_result_{result}.png')
-        else:
-            title = (f'testds[{idx}] | attention_mask_{idx} | heat_attention_{idx}\n'
-                     f'(path: {input_path})\n'
-                     f'(ViT model: {ckpt_file})')
-            plot_attention([im_orig, im_mask, im_heatmap], title,
-                f'{save_dir}/attention_debug_{idx}_{ckpt_file}.png')
