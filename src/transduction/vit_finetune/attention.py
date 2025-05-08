@@ -111,3 +111,40 @@ def plot_attention(ims, title, save_path):
     plt.axis('off')
     plt.setp(axes, xticks=[], yticks=[])
     plt.savefig(save_path, bbox_inches='tight')
+
+
+def plot_attention_heads(heatmaps, heatmap_ave, title, save_path):
+    fig = plt.figure()
+
+    axes = []
+
+    mid = int(len(heatmaps)/2)
+    ims_up = heatmaps[:mid]
+    ims_down = heatmaps[mid:]
+
+    rows, cols = 3, mid
+
+    for idx in range(cols):
+        ax = fig.add_subplot(rows, cols, idx + 1)
+        axes.append(ax)
+        plt.imshow(ims_up[idx])
+        #ax.set_title(f'head[{idx}]')  # above the image
+        ax.set_xlabel(f'head[{idx}]')  # below the image
+
+    for idx in range(cols):
+        ax = fig.add_subplot(rows, cols, mid + idx + 1)
+        axes.append(ax)
+        plt.imshow(ims_down[idx])
+        ax.set_xlabel(f'head[{mid + idx}]')  # below the image
+
+    ax = fig.add_subplot(rows, cols, mid + mid + 1)
+    axes.append(ax)
+    plt.imshow(heatmap_ave)
+    ax.set_title(f'(ave)')  # KLUDGE above the image
+    #ax.set_xlabel(f'heatmap_ave')  # FIXME not shown
+
+    fig.suptitle(title)
+
+    plt.axis('off')
+    plt.setp(axes, xticks=[], yticks=[])
+    plt.savefig(save_path, bbox_inches='tight')
