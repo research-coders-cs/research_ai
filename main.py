@@ -81,7 +81,7 @@ if __name__ == '__main__':
         vit_main()
         exit()
 
-    if 1:  # finetune
+    if 0:  # finetune
         from src.transduction.vit_finetune.main import main as vit_finetune_main
 
         vit_finetune_main()

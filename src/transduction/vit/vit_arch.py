@@ -45,17 +45,25 @@ Let’s create a custom Vision Transformer that:
 - Optionally modifies the number of layers or heads (e.g., reducing to 4 layers like your earlier setup).
 """
 
-from transformers import ViTModel, ViTConfig
+from transformers import ViTModel, ViTConfig, ViTImageProcessor
 
 class CustomViT(nn.Module):
-    def __init__(self, num_classes=10, pretrained_model_name="google/vit-base-patch16-224", num_hidden_layers=None):
+    pretrained_model_name = "google/vit-base-patch16-224"
+
+    @staticmethod
+    def get_image_processor():
+        return ViTImageProcessor.from_pretrained(CustomViT.pretrained_model_name)
+
+    def __init__(self, num_classes=10, num_hidden_layers=None):
         super().__init__()
 
-        self.pretrained_config = ViTConfig.from_pretrained(pretrained_model_name)
+        model_name = CustomViT.pretrained_model_name
+
+        self.pretrained_config = ViTConfig.from_pretrained(model_name)
         if num_hidden_layers is not None:
             self.pretrained_config.num_hidden_layers = num_hidden_layers
 
-        pretrained_vit = ViTModel.from_pretrained(pretrained_model_name, output_attentions=True)
+        pretrained_vit = ViTModel.from_pretrained(model_name, output_attentions=True)
 
         # Channel adapter for 1-to-3 channel conversion
         # Why
@@ -163,14 +171,33 @@ def main():
 
     ##
 
-    transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-    ])
+    #==== mnist
+    if 0:
+        transform = transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+        ])
 
-    mnist = load_dataset("mnist")
-    train_dataset = CustomDataset(mnist["train"], transform=transform)
-    test_dataset = CustomDataset(mnist["test"], transform=transform)
+        mnist = load_dataset("mnist")
+        train_dataset = CustomDataset(mnist["train"], transform=transform)
+        test_dataset = CustomDataset(mnist["test"], transform=transform)
+    #==== mri-erica
+    if 1:
+        processor = CustomViT.get_image_processor()
+        print('@@ processor:', processor)
+
+        transf_inner = transforms.Compose([
+            transforms.Resize((processor.size['height'], processor.size['width'])),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=processor.image_mean, std=processor.image_std),
+        ])
+
+        # WIP
+        # transf = lambda pil_img, idx_mri_left_right : transf_inner(
+        #     MriDataset.erica_crop_pil(pil_img, idx_mri_left_right))
+
+        exit()  # !!!! !!!!
+
 
     if 1:  # @@ dev
         #====
