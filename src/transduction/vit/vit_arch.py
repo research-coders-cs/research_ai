@@ -136,7 +136,7 @@ class CustomViT(nn.Module):
         print(f"Test Accuracy: {100 * correct / total:.2f}%")
 
 
-class CustomDataset(Dataset):
+class CustomMnistDataset(Dataset):
     def __init__(self, ds, transform=None):
         # @@ ds: Dataset({
         #     features: ['image', 'label'],
@@ -156,6 +156,20 @@ class CustomDataset(Dataset):
             image = self.transform(image)
 
         return image, label
+
+
+class CustomMriDataset(Dataset):
+    def __init__(self, ds):
+        self.ds = ds
+
+    def __len__(self):
+        return len(self.ds)
+
+    def __getitem__(self, idx):
+        # c.f. `MriDatasetAdapter` in 'vit_finetune/main.py'
+        pixels, class_index, _extra = self.ds[idx]
+
+        return pixels, class_index
 
 
 def main():
@@ -179,8 +193,8 @@ def main():
         ])
 
         mnist = load_dataset("mnist")
-        train_dataset = CustomDataset(mnist["train"], transform=transform)
-        test_dataset = CustomDataset(mnist["test"], transform=transform)
+        train_dataset = CustomMnistDataset(mnist["train"], transform=transform)
+        test_dataset = CustomMnistDataset(mnist["test"], transform=transform)
     #==== mri-erica
     if 1:
         processor = CustomViT.get_image_processor()
@@ -192,9 +206,24 @@ def main():
             transforms.Normalize(mean=processor.image_mean, std=processor.image_std),
         ])
 
-        # WIP
-        # transf = lambda pil_img, idx_mri_left_right : transf_inner(
-        #     MriDataset.erica_crop_pil(pil_img, idx_mri_left_right))
+        from ..vit.vit_torch import stat_ds_paths, get_mri_ds_paths, MriDataset
+        #ds_paths, class_names_sorted = get_mri_ds_paths('debug')
+        ds_paths, class_names_sorted = get_mri_ds_paths('erica')
+        stat_ds_paths(ds_paths)
+
+        transf = lambda pil_img, idx_mri_left_right : transf_inner(
+            MriDataset.erica_crop_pil(pil_img, idx_mri_left_right))
+
+        data_set = MriDataset(
+            phase='finetune_train',
+            dataset=ds_paths['train'],
+            transform=transf)
+        train_set, test_set, _ = random_split(data_set, [90, 10, len(data_set)-100])
+
+        train_dataset = CustomMriDataset(train_set)
+        test_dataset = CustomMriDataset(test_set)
+
+        print('len({train,test}_dataset):', len(train_dataset), len(test_dataset))
 
         exit()  # !!!! !!!!
 
