@@ -197,7 +197,6 @@ def get_trainer(model, args, processor, trainds, valds):
 
 
 from torch.utils.data import Dataset, random_split
-from torch.utils.data.dataset import T_co
 class MriDatasetAdapter(Dataset):
 
     def __init__(self, dataset):
@@ -206,7 +205,7 @@ class MriDatasetAdapter(Dataset):
     def __len__(self):
         return len(self.dataset)
 
-    def __getitem__(self, index) -> T_co:
+    def __getitem__(self, index):
         px, class_index, extra = self.dataset[index]
         return {'img': extra['path'], 'label': class_index, 'pixels': px }
 

@@ -146,7 +146,6 @@ def patches_plot(plt, patches, idx, n_patches_hw, img_hw):
 
 #-------- ^^ @@
 from torch.utils.data import Dataset
-from torch.utils.data.dataset import T_co
 
 class MriDataset(Dataset):
 
@@ -175,7 +174,7 @@ class MriDataset(Dataset):
                 return k, class_num, index
         raise IndexError(f"Index is out of range {index}")
 
-    def __getitem__(self, index) -> T_co:
+    def __getitem__(self, index):
         label, class_index, inclass_index = self.__get_partitioned_index(index)
         path = self.dataset[label][inclass_index]
         extra = {
