@@ -92,8 +92,11 @@ class CustomViT(nn.Module):
     # override
     def forward(self, pixel_values, output_attentions=False):
         batch_size = pixel_values.shape[0]
+        channel_size = pixel_values.shape[1]
 
-        pixel_values = self.channel_adapter(pixel_values)  # (batch, 1, 224, 224) -> (batch, 3, 224, 224)
+        if channel_size == 1:
+            pixel_values = self.channel_adapter(pixel_values)  # (batch, 1, 224, 224) -> (batch, 3, 224, 224)
+
         patch_embeds = self.patch_embeddings(pixel_values)  # Already (batch, 196, 768)
 
         cls_tokens = self.cls_token.expand(batch_size, -1, -1)  # (batch, 1, 768)
@@ -225,10 +228,7 @@ def main():
 
         print('len({train,test}_dataset):', len(train_dataset), len(test_dataset))
 
-        exit()  # !!!! !!!!
-
-
-    if 1:  # @@ dev
+    if 0:  # @@ dev; mnist
         #====
         len_train, len_test = 60, 10  # 0.1%; for dev iter
         #====
@@ -250,8 +250,8 @@ Test Accuracy: 87.50%
         train_dataset, _ = random_split(train_dataset, [len_train, len(train_dataset) - len_train])
         test_dataset, _ = random_split(test_dataset, [len_test, len(test_dataset) - len_test])
         print('@@ !! train/test dataset shortened')
-    else:
-        pass  # 60000, 10000  # 100%
+    # else:
+    #     pass  # 60000, 10000  # 100%
 
     print('@@ len(train_dataset):', len(train_dataset))
     print('@@ len(test_dataset):', len(test_dataset))
@@ -268,16 +268,20 @@ Test Accuracy: 87.50%
 
     device_str = "cuda" if torch.cuda.is_available() else "cpu"
     device = torch.device(device_str)
-    model = CustomViT(num_classes=10, num_hidden_layers=4).to(device)
+
+    #model = CustomViT(num_classes=10, num_hidden_layers=4).to(device)  # mnist
+    model = CustomViT(num_classes=4, num_hidden_layers=12).to(device)  # erica
 
     # MODEL_PATH = "custom_vit_mnist.pth"
-    MODEL_PATH = "custom_vit_mnist--10pct-8eps.pth"
+    #MODEL_PATH = "custom_vit_mnist--10pct-8eps.pth"
+    MODEL_PATH = "custom_vit_erica--4pct-1eps.pth"
 
     if 0:  # do training?
         optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-2)
         loss_fn = nn.CrossEntropyLoss()
 
-        epoch_n = 8
+        #epoch_n = 8
+        epoch_n = 1  # !!!
 
         model.train()
         model.xx_train(device, optimizer, loss_fn, epoch_n, train_dataloader)
