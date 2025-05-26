@@ -273,8 +273,8 @@ Test Accuracy: 87.50%
     model = CustomViT(num_classes=4, num_hidden_layers=12).to(device)  # erica
 
     # MODEL_PATH = "custom_vit_mnist.pth"
-    #MODEL_PATH = "custom_vit_mnist--10pct-8eps.pth"
-    MODEL_PATH = "custom_vit_erica--4pct-1eps.pth"
+    #MODEL_PATH = "custom_vit_mnist--10pct-8eps.pth"  # 10% of full size
+    MODEL_PATH = "custom_vit_erica--train90test10-1eps.pth"
 
     if 0:  # do training?
         optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-2)
