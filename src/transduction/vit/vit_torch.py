@@ -629,14 +629,14 @@ def get_mri_ds_paths(variant, root='datasets_mri/50-001'):
                 'e4': ['p0', 'p1'],
             },
         }
+        class_names_sorted = ['e1', 'e2', 'e3', 'e4']
         ds_paths['train']['e1'][0] = 'datasets_mri/50-001/sub-ADNI002S0295_ses-M012/mta_erica_sub-ADNI002S0295_ses-M012_116.png?erica=l'
         ds_paths['train']['e1'][1] = 'datasets_mri/50-001/sub-ADNI002S0295_ses-M012/mta_erica_sub-ADNI002S0295_ses-M012_116.png?erica=r'
     elif variant == 'erica':
         ds_paths = get_erica_ds_paths(root)
+        class_names_sorted = ['E0', 'E1', 'E2', 'E3']
     else:
         raise ValueError(f'unknown ds_paths variant: {variant}')
-
-    class_names_sorted = ['e1', 'e2', 'e3', 'e4']
 
     return ds_paths, class_names_sorted
 
