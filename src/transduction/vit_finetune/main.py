@@ -29,10 +29,9 @@ from transformers import ViTImageProcessor, ViTForImageClassification
 from transformers import TrainingArguments, Trainer
 import numpy as np
 from sklearn.metrics import accuracy_score
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 #---- @@
-from ..plot_if import get_plt, plt_imshow, plt_imshow_tensor, is_colab
+from ..plot_if import get_plt, plt_imshow, plt_imshow_tensor, get_confusion_matrix
 plt = get_plt()
 
 from torchvision.transforms import ToPILImage, PILToTensor
@@ -208,19 +207,6 @@ class MriDatasetAdapter(Dataset):
     def __getitem__(self, index):
         px, class_index, extra = self.dataset[index]
         return {'img': extra['path'], 'label': class_index, 'pixels': px }
-
-
-def get_confusion_matrix(y_true, y_pred, class_names_sorted):
-    cm = confusion_matrix(y_true, y_pred, labels=[i for i in range(len(class_names_sorted))])
-    print('@@ cm:\n', cm)
-
-    fname = 'confusion_matrix.png'
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=class_names_sorted)
-
-    print(f'@@ get_confusion_matrix(): saving {fname}')
-    disp.plot(xticks_rotation=45).figure_.savefig(fname)
-    if is_colab():
-        plt_imshow(plt, fname)
 
 
 from ..vit.bs1_atten import Bs1Atten
