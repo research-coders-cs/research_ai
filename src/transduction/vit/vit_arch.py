@@ -111,7 +111,7 @@ class CustomViT(nn.Module):
             return logits, encoder_outputs.attentions
         return logits
 
-    def xx_train(self, device, optimizer, loss_fn, epoch_n, train_dataloader):
+    def custom_train(self, device, optimizer, loss_fn, epoch_n, train_dataloader):
         for epoch in range(epoch_n):
             epoch_loss = 0.0
             for batch in train_dataloader:
@@ -125,18 +125,32 @@ class CustomViT(nn.Module):
                 epoch_loss += loss.item()
             print(f"Epoch {epoch+1}/{epoch_n}, Average Loss: {epoch_loss / len(train_dataloader):.4f}")
 
-    def xx_test(self, device, test_dataloader):
+    def custom_test(self, device, test_dataloader):
+        predicted_cat = torch.tensor([], dtype=torch.long)
+        labels_cat = torch.tensor([], dtype=torch.long)
+
         correct = 0
         total = 0
         with torch.no_grad():
             for batch in test_dataloader:
                 pixels, labels = batch
                 pixels, labels = pixels.to(device), labels.to(device)
-                outputs = self(pixels)
+                outputs = self(pixels)  # with shape [batch_size, num_classes]
                 _, predicted = torch.max(outputs, 1)
+
+                #print('@@ predicted, labels:', predicted, labels)
+                predicted_cat = torch.cat((predicted_cat, predicted), dim=0)
+                labels_cat = torch.cat((labels_cat, labels), dim=0)
+
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
         print(f"Test Accuracy: {100 * correct / total:.2f}%")
+
+        if 0:
+            print(f'@@ (len={len(predicted_cat)}) predicted_cat:', predicted_cat)
+            print(f'@@ (len={len(labels_cat)}) labels_cat:', labels_cat)
+
+        return labels_cat, predicted_cat
 
 
 class CustomMnistDataset(Dataset):
@@ -221,7 +235,9 @@ def main():
             phase='finetune_train',
             dataset=ds_paths['train'],
             transform=transf)
-        train_set, test_set, _ = random_split(data_set, [90, 10, len(data_set)-100])
+
+        #train_set, test_set, _ = random_split(data_set, [90, 10, len(data_set)-100])
+        train_set, test_set = random_split(data_set, [1100, 100])  # colab
 
         train_dataset = CustomMriDataset(train_set)
         test_dataset = CustomMriDataset(test_set)
@@ -274,7 +290,10 @@ Test Accuracy: 87.50%
 
     # MODEL_PATH = "custom_vit_mnist.pth"
     #MODEL_PATH = "custom_vit_mnist--10pct-8eps.pth"  # 10% of full size
-    MODEL_PATH = "custom_vit_erica--train90test10-1eps.pth"
+    #MODEL_PATH = "custom_vit_erica--train90test10-1eps.pth"
+    #MODEL_PATH = "custom_vit_erica_colab_8eps.pth"  # full: [1100, 100]
+    MODEL_PATH = "custom_vit_erica_colab_20eps.pth"  # full: [1100, 100], latest (@@ torch.__version__: 2.6.0+cu124)
+
 
     if 0:  # do training?
         optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-2)
@@ -284,7 +303,7 @@ Test Accuracy: 87.50%
         epoch_n = 1  # !!!
 
         model.train()
-        model.xx_train(device, optimizer, loss_fn, epoch_n, train_dataloader)
+        model.custom_train(device, optimizer, loss_fn, epoch_n, train_dataloader)
 
         torch.save(model.state_dict(), MODEL_PATH)
         print(f"Model saved to {MODEL_PATH}")
@@ -300,9 +319,11 @@ Test Accuracy: 87.50%
 
     model.eval()
 
-    if 0:
+    if 1:
         print(f"Testing with `test_dataloader`...")
-        model.xx_test(device, test_dataloader)
+        y_true, y_pred = model.custom_test(device, test_dataloader)
+
+
         exit()
 
     # Optional: Inference with attention debugging
