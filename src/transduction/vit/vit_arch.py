@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision import transforms
 
 from .bs1_atten import Bs1Atten
+from ..plot_if import get_confusion_matrix
 
 
 """
@@ -322,7 +323,7 @@ Test Accuracy: 87.50%
     if 1:
         print(f"Testing with `test_dataloader`...")
         y_true, y_pred = model.custom_test(device, test_dataloader)
-
+        get_confusion_matrix(y_true, y_pred, class_names_sorted)
 
         exit()
 
