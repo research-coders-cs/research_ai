@@ -215,21 +215,47 @@ def verify_attentions(model, testds, y_true=None, y_pred=None, ckpt_file=None, s
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    for idx, x in enumerate(testds):
-        #print(idx, x['img'], x['label'], x['pixels'].shape)
+    def gen_finetune():
+        for idx, x in enumerate(testds):
+            input = x['pixels']  # torch.Size([3, 224, 224])
+            input_path = x['img']
 
-        input = x['pixels']  # # torch.Size([3, 224, 224])
-        input_path = x['img']
+            outputs = model(
+                input.to(device).unsqueeze(0),  # --> [1, 3, 224, 224] ([batch_size, channels, height, width])
+                output_attentions=True)
+            logits = outputs.logits
+            attentions = outputs.attentions
+            input = input.cpu()[0, :, :]  # --> torch.Size([224, 224])
+            yield idx, input, input_path, logits, attentions
 
-        #---- Compute attentions per `input`
+    def gen_arch():
+        for idx, x in enumerate(testds):
+            input, _, extra = x
+            input_path = extra['path'][0]
 
-        outputs = model(
-            input.to(device).unsqueeze(0),  # --> [1, 3, 224, 224] ([batch_size, channels, height, width])
-            output_attentions=True)
-        logits = outputs.logits
-        attentions = outputs.attentions
+            logits, attentions = model(
+                input.to(device),  # torch.Size([1, 3, 224, 224])
+                output_attentions=True)
+            input = input.cpu()[0, 0, :, :]  # --> torch.Size([224, 224])
+            yield idx, input, input_path, logits, attentions
 
-        input = input.cpu()[0, :, :]  # --> torch.Size([224, 224])
+    #
+
+    model_class = type(model).__name__
+    print('@@ model_class:', model_class)
+    if model_class == 'ViTForImageClassification':
+        gen = gen_finetune
+    elif model_class == 'CustomViT':
+        gen = gen_arch
+    else:
+        raise ValueError(f'Unsupported model_class: {model_class}')
+
+    #
+
+    for idx, input, input_path, logits, attentions in gen():
+        # if idx == 4:  # !!!!
+        #     break
+
         att_mat = torch.cat(attentions).cpu()  # torch.Size([12, 12, 197, 197]) [num_hidden_layers, num_heads, seq_len, seq_len]
 
         if 0:
@@ -501,7 +527,7 @@ def main():
     if 1:
         import os
 
-        attn_dir = 'inference_attention'
+        attn_dir = 'inference_attention_finetune'
         if not os.path.exists(attn_dir):
             os.makedirs(attn_dir, exist_ok=True)
 

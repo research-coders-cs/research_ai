@@ -116,7 +116,7 @@ class CustomViT(nn.Module):
         for epoch in range(epoch_n):
             epoch_loss = 0.0
             for batch in train_dataloader:
-                pixels, labels = batch
+                pixels, labels, _extra = batch
                 pixels, labels = pixels.to(device), labels.to(device)
                 optimizer.zero_grad()
                 outputs = self(pixels)
@@ -134,7 +134,7 @@ class CustomViT(nn.Module):
         total = 0
         with torch.no_grad():
             for batch in test_dataloader:
-                pixels, labels = batch
+                pixels, labels, _extra = batch
                 pixels, labels = pixels.to(device), labels.to(device)
                 outputs = self(pixels)  # with shape [batch_size, num_classes]
                 _, predicted = torch.max(outputs, 1)
@@ -185,10 +185,7 @@ class CustomMriDataset(Dataset):
 
     def __getitem__(self, idx):
         # c.f. `MriDatasetAdapter` in 'vit_finetune/main.py'
-        pixels, class_index, _extra = self.ds[idx]
-
-        return pixels, class_index
-
+        return self.ds[idx]  # pixels, class_index, extra
 
 def main():
 
@@ -320,28 +317,42 @@ Test Accuracy: 87.50%
 
     model.eval()
 
+    y_true = None
+    y_pred = None
+
     if 1:
         print(f"Testing with `test_dataloader`...")
         y_true, y_pred = model.custom_test(device, test_dataloader)
         get_confusion_matrix(y_true, y_pred, class_names_sorted)
+        #exit()  # !!
 
-        exit()
+    if 1:
+        import os
+        from ..vit_finetune.main import verify_attentions
 
-    # Optional: Inference with attention debugging
-    with torch.no_grad():
-        for i_batch, batch in enumerate(test_dataloader_bs1):
-            pixels, labels = batch
-            pixels, labels = pixels.to(device), labels.to(device)
-            #print(f"pixels, labels: {pixels.shape}, {labels.shape}")  # torch.Size([1, 1, 224, 224]), torch.Size([1])
+        attn_dir = 'inference_attention_arch'
+        if not os.path.exists(attn_dir):
+            os.makedirs(attn_dir, exist_ok=True)
 
-            logits, attentions = model(pixels, output_attentions=True)
-            print(f"Number of attention layers: {len(attentions)}")
+        verify_attentions(model, test_dataloader_bs1,
+                          y_true=y_true, y_pred=y_pred,
+                          ckpt_file=MODEL_PATH, save_dir=attn_dir)
 
-            if 0:
-                Bs1Atten.save(pixels, labels, logits, attentions, i_batch)  # e.g. 'bs1_attn/*'
-            else:
-                Bs1Atten.process(pixels, attentions, i_batch)
+    if 0:  # attention processing debug
+        with torch.no_grad():
+            for i_batch, batch in enumerate(test_dataloader_bs1):
+                pixels, labels, _extra = batch
+                pixels, labels = pixels.to(device), labels.to(device)
+                #print(f"pixels, labels: {pixels.shape}, {labels.shape}")  # torch.Size([1, 1, 224, 224]), torch.Size([1])
 
+                logits, attentions = model(pixels, output_attentions=True)
+                print(f"Number of attention layers: {len(attentions)}")
+
+                if 0:
+                    Bs1Atten.save(pixels, labels, logits, attentions, i_batch)  # e.g. 'bs1_attn/*'
+                else:
+                    Bs1Atten.process(pixels, attentions, i_batch)
+                    exit()  # !!
 
 if __name__ == "__main__":
     main()
