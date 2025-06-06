@@ -211,8 +211,6 @@ class MriDatasetAdapter(Dataset):
 
 from ..vit.bs1_atten import Bs1Atten
 def verify_attentions(model, testds, y_true=None, y_pred=None, ckpt_file=None, save_dir='inference'):
-    print(f'@@ verify_attentions(): ^^ len(testds): {len(testds)}')
-
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def gen_finetune():

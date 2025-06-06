@@ -322,7 +322,7 @@ Test Accuracy: 87.50%
     y_true = None
     y_pred = None
 
-    if 1:
+    if 0:
         print(f"Testing with `test_dataloader`...")
         y_true, y_pred = model.custom_test(device, test_dataloader)
         get_confusion_matrix(y_true, y_pred, class_names_sorted)
@@ -336,7 +336,16 @@ Test Accuracy: 87.50%
         if not os.path.exists(attn_dir):
             os.makedirs(attn_dir, exist_ok=True)
 
-        verify_attentions(model, test_dataloader_bs1,
+        def generate_first(limit):
+            for i, batch in enumerate(test_dataloader_bs1):
+                if i >= limit:
+                    break
+                yield batch
+
+        verify_sample_size = 4
+        print('@@ verify_sample_size:', verify_sample_size)
+
+        verify_attentions(model, generate_first(verify_sample_size),
                           y_true=y_true, y_pred=y_pred,
                           ckpt_file=MODEL_PATH, save_dir=attn_dir)
 
