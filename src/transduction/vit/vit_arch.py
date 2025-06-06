@@ -64,7 +64,8 @@ class CustomViT(nn.Module):
         if num_hidden_layers is not None:
             self.pretrained_config.num_hidden_layers = num_hidden_layers
 
-        pretrained_vit = ViTModel.from_pretrained(model_name, output_attentions=True)
+        pretrained_vit = ViTModel.from_pretrained(
+            model_name, output_attentions=True, attn_implementation="eager")
 
         # Channel adapter for 1-to-3 channel conversion
         # Why
@@ -139,7 +140,8 @@ class CustomViT(nn.Module):
                 outputs = self(pixels)  # with shape [batch_size, num_classes]
                 _, predicted = torch.max(outputs, 1)
 
-                #print('@@ predicted, labels:', predicted, labels)
+                predicted = predicted.cpu()
+                labels = labels.cpu()
                 predicted_cat = torch.cat((predicted_cat, predicted), dim=0)
                 labels_cat = torch.cat((labels_cat, labels), dim=0)
 
