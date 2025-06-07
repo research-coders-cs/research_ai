@@ -336,16 +336,10 @@ Test Accuracy: 87.50%
         if not os.path.exists(attn_dir):
             os.makedirs(attn_dir, exist_ok=True)
 
-        def generate_first(limit):
-            for i, batch in enumerate(test_dataloader_bs1):
-                if i >= limit:
-                    break
-                yield batch
+        verify_sample_size = 5
+        print(f'Verifying first {verify_sample_size} samples of {len(test_dataloader_bs1)}')
 
-        verify_sample_size = 4
-        print('@@ verify_sample_size:', verify_sample_size)
-
-        verify_attentions(model, generate_first(verify_sample_size),
+        verify_attentions(model, test_dataloader_bs1, verify_sample_size,
                           y_true=y_true, y_pred=y_pred,
                           ckpt_file=MODEL_PATH, save_dir=attn_dir)
 

@@ -210,7 +210,8 @@ class MriDatasetAdapter(Dataset):
 
 
 from ..vit.bs1_atten import Bs1Atten
-def verify_attentions(model, testds, y_true=None, y_pred=None, ckpt_file=None, save_dir='inference'):
+def verify_attentions(model, testds, verify_sample_size=-1, y_true=None, y_pred=None,
+                      ckpt_file=None, save_dir='inference'):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def gen_finetune():
@@ -251,8 +252,8 @@ def verify_attentions(model, testds, y_true=None, y_pred=None, ckpt_file=None, s
     #
 
     for idx, input, input_path, logits, attentions in gen():
-        # if idx == 4:  # !!!!
-        #     break
+        if verify_sample_size >= 0 and verify_sample_size == idx:
+            break
 
         att_mat = torch.cat(attentions).cpu()  # torch.Size([12, 12, 197, 197]) [num_hidden_layers, num_heads, seq_len, seq_len]
 
