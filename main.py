@@ -11,12 +11,11 @@
   pip install scikit-learn
 """
 
-import transduction  # 'research-ai-transduction' pkg (i.e. 'src/transduction/*')
+##import transduction  # 'research-ai-transduction' pkg (i.e. 'src/transduction/*')
 
 #----
 from transduction.plot_if import is_colab, get_plt, plt_show, plt_imshow
 plt = get_plt()
-
 
 def test_plt_show():  # ok
     plt.plot([0,1.0], [0,1.0], color='navy', lw=2, linestyle='--')
@@ -30,22 +29,8 @@ def test_plt_show():  # ok
 if 0:
     test_plt_show()
 
-def test_df_export():  # ok
-    import pandas as pd
-    import dataframe_image as dfi
-    d = {'col1': [1, 2], 'col2': [3, 4]}
-    df = pd.DataFrame(data=d)
-    dfi.export(df, '__df.png')
-
-if 0:
-    test_df_export()
-
-
-from transduction import example_mask  # !!!!
 #----
 
-from transduction.helper import show_example
-from transduction.vocab import load_tokenizers, load_vocab  # ok with torch 1.11 (enforced by `torchdata==0.3.0`); err with torch 2.3.0
 
 import logging
 logger = logging.getLogger('@@')
@@ -59,18 +44,35 @@ if __name__ == '__main__':
     print("__main__: ^^")
 
     if 0:
+        from src.transduction.lang.helper import show_example
+        from src.transduction.lang.vocab import load_tokenizers, load_vocab  # ok with torch 1.11 (enforced by `torchdata==0.3.0`); err with torch 2.3.0
+
         # global variables used later in the script
         spacy_de, spacy_en = show_example(load_tokenizers)
         vocab_src, vocab_tgt = show_example(load_vocab, args=[spacy_de, spacy_en])
+        exit()
 
-    if 0:  # Encoder/Decoder part, and TODO
+    if 1:  # Encoder/Decoder part, and TODO
+        from src.transduction.lang import example_mask  # !!!!
+
+        def test_df_export():  # ok
+            import pandas as pd
+            import dataframe_image as dfi
+            d = {'col1': [1, 2], 'col2': [3, 4]}
+            df = pd.DataFrame(data=d)
+            dfi.export(df, '__df.png')
+
+        if 0:
+            test_df_export()
+            exit()
+
         chart = example_mask()  # `alt.Chart`
         fpath = '__chart.png'
         chart.save(fpath)  # require pkgs: `dataframe-image` and `vl-convert-python`
         plt_imshow(plt, fpath)
 
         # TODO ........
-
+        exit()
 
     if 0:  # https://medium.com/@brianpulfer/vision-transformers-from-scratch-pytorch-a-step-by-step-guide-96c3313c2e0c
         #==== mt; slow, needs building the pkg
