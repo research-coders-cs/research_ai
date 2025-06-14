@@ -43,7 +43,7 @@ if __name__ == '__main__':
 
     print("__main__: ^^")
 
-    if 0:
+    if 0:  # lang -- data
         from src.transduction.lang.helper import show_example
         from src.transduction.lang.vocab import load_tokenizers, load_vocab  # ok with torch 1.11 (enforced by `torchdata==0.3.0`); err with torch 2.3.0
 
@@ -52,7 +52,7 @@ if __name__ == '__main__':
         vocab_src, vocab_tgt = show_example(load_vocab, args=[spacy_de, spacy_en])
         exit()
 
-    if 1:  # Encoder/Decoder part, and TODO
+    if 0:  # lang -- Encoder/Decoder part, and TODO
         from src.transduction.lang import example_mask  # !!!!
 
         def test_df_export():  # ok
