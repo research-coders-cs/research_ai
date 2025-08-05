@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from torch.nn import functional
-from torch.utils.tensorboard import SummaryWriter
+#from torch.utils.tensorboard import SummaryWriter
 
 from .metric import AverageMeter, TopKAccuracyMetric
 from .augment import batch_augment, img_gpu_to_cpu
@@ -132,10 +132,10 @@ def _train(device, logs, train_loader, net, feature_center, optimizer, pbar,
             epoch_loss, epoch_raw_acc[0],
             epoch_crop_acc[0], epoch_drop_acc[0])
 
-        writer.add_scalar("Loss/train", epoch_loss, batch_idx)
-        writer.add_scalar('Acc(Raw)/train', epoch_raw_acc[0], batch_idx)
-        writer.add_scalar('Acc(Crop)/train', epoch_crop_acc[0], batch_idx)
-        writer.add_scalar('Acc(Drop)/train', epoch_drop_acc[0], batch_idx)
+        #writer.add_scalar("Loss/train", epoch_loss, batch_idx)
+        #writer.add_scalar('Acc(Raw)/train', epoch_raw_acc[0], batch_idx)
+        #writer.add_scalar('Acc(Crop)/train', epoch_crop_acc[0], batch_idx)
+        #writer.add_scalar('Acc(Drop)/train', epoch_drop_acc[0], batch_idx)
 
         example_ct += len(X)
         metrics = {
@@ -260,11 +260,11 @@ def _validate(device, logs, validate_loader, net, pbar, savepath_epoch):
         'drop': logs['train/drop_topk_accuracy'][0]
     }
 
-    writer.add_scalars("Loss", loss, epoch)
-    writer.add_scalars('Acc', raw_acc, epoch)
-    writer.add_scalars('Acc/Crop-Drop', crop_drop_acc, epoch)
+    #writer.add_scalars("Loss", loss, epoch)
+    #writer.add_scalars('Acc', raw_acc, epoch)
+    #writer.add_scalars('Acc/Crop-Drop', crop_drop_acc, epoch)
 
-    writer.flush()
+    #writer.flush()
 
     # end of validation
     logs['val/{}'.format(loss_container.name)] = epoch_loss
@@ -319,7 +319,7 @@ drop_metric = TopKAccuracyMetric()
 
 
 top_misclassified = {}
-writer = SummaryWriter()
+#writer = SummaryWriter()
 
 def train(device, net, feature_center, batch_size, kfold_loaders,
              optimizer, scheduler, run_name, logs, start_epoch, total_epochs,
@@ -392,7 +392,7 @@ def train(device, net, feature_center, batch_size, kfold_loaders,
 
             #@@wandb.log(logs)
             pbar.close()
-            writer.flush()
+            #writer.flush()
 
             gc.collect()
             torch.cuda.empty_cache()

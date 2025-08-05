@@ -1,24 +1,27 @@
-import wsdan  # 'research-thyroid-wsdan' pkg (i.e. 'src/wsdan/*')
-from wsdan.demo import test as demo_test
-from wsdan.demo import train as demo_train
-from wsdan.demo import train_with_doppler as demo_train_with_doppler
-from wsdan.digitake.preprocess import build_dataset
+from .demo import test as demo_test
+from .demo import train as demo_train
+from .demo import train_with_doppler as demo_train_with_doppler
+from .digitake.preprocess import build_dataset
 
 import logging
 logger = logging.getLogger('@@')
 logger.setLevel(level=logging.DEBUG if 1 else logging.INFO)
 
 
-if __name__ == '__main__':
+def main():
+
+    print('00001111')
+    exit(99)
 
     if 0:  # adaptation of 'compare.{ipynb,py}' exported from https://colab.research.google.com/drive/1kxMFgo1LyVqPYqhS6_UJKUsVvA2-l9wk
-        wsdan.demo.doppler_compare()
+        from .demo import doppler_compare
+        doppler_compare()
 
     if 0:
         # ckpt = 'ttt/51/output/demo_train/densenet_250_8_lr-1e5_n4_75.000'  # 0.800
         # demo.test(ckpt)  # TODO - generate 'confusion_matrix_test-*.png', 'test-*.png'
 
-        from wsdan.demo import TEST_DS_PATH_DEFAULT
+        from .demo import TEST_DS_PATH_DEFAULT
         ckpt = 'densenet_224_8_lr-1e5_n4_95.968.ckpt'  # 0.9xx, LGTM
         demo_test(ckpt, 'densenet121', TEST_DS_PATH_DEFAULT, 224, 8)
 
@@ -114,3 +117,7 @@ if __name__ == '__main__':
 
         ##demo_test('xxxx/ckpt', 'resnet34', test_ds_path)
         demo_test('densenet121_250_8_lr-1e5_n4', 'densenet121', test_ds_path)
+
+
+if __name__ == '__main__':
+    main()
