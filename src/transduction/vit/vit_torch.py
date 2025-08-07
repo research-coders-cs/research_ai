@@ -261,7 +261,7 @@ def stat_ds_paths(ds_paths):
     print("@@ stat_ds_paths(): ---- ^^")
 
     for phase, dsp in ds_paths.items():
-        if phase in ['train', 'test']:
+        if phase in ['train', 'test', 'validate']:
             total = 0
             details = []
             for label in dsp.keys():

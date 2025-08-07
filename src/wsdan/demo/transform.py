@@ -1,6 +1,3 @@
-#@@from ..digitake.preprocess import ThyroidDataset, build_train_validation_set, get_transform, imagenet_mean, imagenet_std
-from ..digitake.preprocess import ThyroidDataset, imagenet_mean, imagenet_std
-
 from torchvision import transforms
 
 

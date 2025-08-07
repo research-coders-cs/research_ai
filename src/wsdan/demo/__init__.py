@@ -1,11 +1,10 @@
 import torch
 from torch.utils.data import DataLoader
 
-from ..digitake.preprocess import build_dataset
-
+from ..shim import build_dataset, ThyroidDataset
 from ..net import WSDAN, net_train, net_test
 
-from .transform import ThyroidDataset, get_transform##, get_transform_center_crop, transform_fn
+from .transform import get_transform
 from .utils import mk_artifact_dir, get_device
 
 
@@ -69,7 +68,7 @@ def slice_split(li_in_const, slice_in):
 
 def create_train_loader(train_ds_path, target_resize, batch_size, workers, with_doppler=False):
     #----!!!!
-    from wsdan.net.doppler import get_to_doppler
+    from ..net.doppler import get_to_doppler
     dataset_doppler_root = train_ds_path['benign'][0].split('/')[0]
     #print('@@ dataset_doppler_root:', dataset_doppler_root)
     #----!!!!

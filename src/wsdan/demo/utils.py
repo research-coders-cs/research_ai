@@ -1,5 +1,4 @@
 import torch
-from .. import digitake
 import os
 
 
@@ -12,8 +11,6 @@ def mk_artifact_dir(dirname):
     return path
 
 def get_device():
-    digitake.model.set_reproducible(2565)
-
     use_gpu = os.environ.get('WSDAN_USE_GPU')
     if use_gpu == '1':  # force
         print('@@ get_device(): force GPU settings...')

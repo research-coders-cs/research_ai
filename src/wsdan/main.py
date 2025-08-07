@@ -1,7 +1,15 @@
 from .demo import test as demo_test
 from .demo import train as demo_train
 from .demo import train_with_doppler as demo_train_with_doppler
-from .digitake.preprocess import build_dataset
+
+
+from .shim import stat_ds_paths, build_dataset
+dataset_doppler_100d = 'Dataset_doppler_100d'
+dataset_doppler_100e = 'Dataset_doppler_100e'
+dataset_doppler_100g = 'Dataset_doppler_100g'
+dataset_train_test_val = 'Dataset_train_test_val'
+siriraj_original_Testset_26 = 'siriraj_original_Testset_26'
+
 
 import logging
 logger = logging.getLogger('@@')
@@ -9,9 +17,6 @@ logger.setLevel(level=logging.DEBUG if 1 else logging.INFO)
 
 
 def main():
-
-    print('00001111')
-    exit(99)
 
     if 0:  # adaptation of 'compare.{ipynb,py}' exported from https://colab.research.google.com/drive/1kxMFgo1LyVqPYqhS6_UJKUsVvA2-l9wk
         from .demo import doppler_compare
@@ -29,16 +34,22 @@ def main():
         total_epochs = 2
         #model = 'densenet121'
         model = 'resnet34'
+
+        #dataset_doppler = dataset_doppler_100e
+        dataset_doppler = dataset_doppler_100g
+
         ds_paths = {
             'train': build_dataset({
                 'benign': ['Markers_Train_Remove_Markers/Benign_Remove/train'],
                 'malignant': ['Markers_Train_Remove_Markers/Malignant_Remove/train'],
-            }, root='Dataset_doppler_100e'),  # 70% + extra, 70% (doppler matched)
+            }, root=dataset_doppler),  # 70% + extra, 70% (doppler matched)
             'validate': build_dataset({
                 'benign': ['Markers_Train_Remove_Markers/Benign_Remove/validate'],
                 'malignant': ['Markers_Train_Remove_Markers/Malignant_Remove/validate'],
-            }, root='Dataset_doppler_100e'),  # 30% 30% (doppler matched)
+            }, root=dataset_doppler),  # 30% 30% (doppler matched)
         }
+
+        stat_ds_paths(ds_paths)
 
         #ckpt = demo_train(total_epochs, model, ds_paths)
         ckpt = demo_train_with_doppler(total_epochs, model, ds_paths, {  # <-- config_doppler=None
@@ -53,7 +64,7 @@ def main():
         test_ds_path = build_dataset({
             'benign': ['Markers_Train_Remove_Markers/Benign_Remove/test'],
             'malignant': ['Markers_Train_Remove_Markers/Malignant_Remove/test'],
-        }, root='Dataset_doppler_100e')  # 75 75
+        }, root=dataset_doppler)  # 75 75
 
         demo_test(ckpt, model, test_ds_path)
 
@@ -68,14 +79,14 @@ def main():
         demo_test(ckpt, 'resnet34', build_dataset({
             'benign': ['Markers_Train_Remove_Markers/Benign_Remove/test'],
             'malignant': ['Markers_Train_Remove_Markers/Malignant_Remove/test'],
-        }, root='Dataset_doppler_100d'))
+        }, root=dataset_doppler_100d))
 
     if 0:  # demo - acc 0.65-0.68
         ckpt = 'WSDAN_doppler_100d-resnet34_250_8_lr-1e5_n4.ckpt'
         test_ds_path = build_dataset({
             'benign': ['Markers_Train_Remove_Markers/Benign_Remove/test'],
             'malignant': ['Markers_Train_Remove_Markers/Malignant_Remove/test'],
-        }, root='Dataset_doppler_100d')
+        }, root=dataset_doppler_100d)
 
         demo_test(ckpt, 'resnet34', test_ds_path, 250, 8)
 
@@ -94,7 +105,7 @@ def main():
         kfold = build_dataset({
             'benign': ['Train/Benign', 'Val/Benign'],
             'malignant': ['Train/Malignant', 'Val/Malignant'],
-        }, root='Dataset_train_test_val')
+        }, root=dataset_train_test_val)
         kfold['benign'] = kfold['benign'][0:30]
         kfold['malignant'] = kfold['malignant'][0:25]
 
@@ -113,7 +124,7 @@ def main():
         test_ds_path = build_dataset({
             'benign': ['test26/Benign'],
             'malignant': ['test26/Malignant'],
-        }, root='siriraj_original_Testset_26')
+        }, root=siriraj_original_Testset_26)
 
         ##demo_test('xxxx/ckpt', 'resnet34', test_ds_path)
         demo_test('densenet121_250_8_lr-1e5_n4', 'densenet121', test_ds_path)
