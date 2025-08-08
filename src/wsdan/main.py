@@ -1,14 +1,7 @@
 from .demo import test as demo_test
 from .demo import train as demo_train
 from .demo import train_with_doppler as demo_train_with_doppler
-
-
 from .shim import stat_ds_paths, build_dataset
-dataset_doppler_100d = 'Dataset_doppler_100d'
-dataset_doppler_100e = 'Dataset_doppler_100e'
-dataset_doppler_100g = 'Dataset_doppler_100g'
-dataset_train_test_val = 'Dataset_train_test_val'
-siriraj_original_Testset_26 = 'siriraj_original_Testset_26'
 
 
 import logging
@@ -35,8 +28,8 @@ def main():
         #model = 'densenet121'
         model = 'resnet34'
 
-        #dataset_doppler = dataset_doppler_100e
-        dataset_doppler = dataset_doppler_100g
+        #dataset_doppler = 'Dataset_doppler_100e'
+        dataset_doppler = 'Dataset_doppler_100g'
 
         ds_paths = {
             'train': build_dataset({
@@ -79,14 +72,14 @@ def main():
         demo_test(ckpt, 'resnet34', build_dataset({
             'benign': ['Markers_Train_Remove_Markers/Benign_Remove/test'],
             'malignant': ['Markers_Train_Remove_Markers/Malignant_Remove/test'],
-        }, root=dataset_doppler_100d))
+        }, root='Dataset_doppler_100d'))
 
     if 0:  # demo - acc 0.65-0.68
         ckpt = 'WSDAN_doppler_100d-resnet34_250_8_lr-1e5_n4.ckpt'
         test_ds_path = build_dataset({
             'benign': ['Markers_Train_Remove_Markers/Benign_Remove/test'],
             'malignant': ['Markers_Train_Remove_Markers/Malignant_Remove/test'],
-        }, root=dataset_doppler_100d)
+        }, root='Dataset_doppler_100d')
 
         demo_test(ckpt, 'resnet34', test_ds_path, 250, 8)
 
@@ -105,7 +98,7 @@ def main():
         kfold = build_dataset({
             'benign': ['Train/Benign', 'Val/Benign'],
             'malignant': ['Train/Malignant', 'Val/Malignant'],
-        }, root=dataset_train_test_val)
+        }, root='Dataset_train_test_val')
         kfold['benign'] = kfold['benign'][0:30]
         kfold['malignant'] = kfold['malignant'][0:25]
 
@@ -124,7 +117,7 @@ def main():
         test_ds_path = build_dataset({
             'benign': ['test26/Benign'],
             'malignant': ['test26/Malignant'],
-        }, root=siriraj_original_Testset_26)
+        }, root='siriraj_original_Testset_26')
 
         ##demo_test('xxxx/ckpt', 'resnet34', test_ds_path)
         demo_test('densenet121_250_8_lr-1e5_n4', 'densenet121', test_ds_path)
