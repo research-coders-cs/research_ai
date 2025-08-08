@@ -238,6 +238,7 @@ def main():
 
         #train_set, test_set, _ = random_split(data_set, [90, 10, len(data_set)-100])
         train_set, test_set = random_split(data_set, [1100, 100])  # colab
+        #train_set, test_set = random_split(data_set, [180, 22])  # debug 'datasets_mri/50-001-100'
 
         train_dataset = CustomMriDataset(train_set)
         test_dataset = CustomMriDataset(test_set)
