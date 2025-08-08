@@ -91,10 +91,10 @@ class EricaDataset:
 
     @staticmethod
     def load_erica_from_csv(fpath):
-        erica_dict = {'E0': [], 'E1': [], 'E2': [], 'E3': [] }
+        erica_dict = {'E0': [], 'E1': [], 'E2': [], 'E3': [], 'E4': [] }
 
         def erica_append(ed, ex, idx_mri_left_right):
-            li = ed.get(f'E{4 - int(ex)}')  # '1' -> 'E3', ..., '4' -> 'E0'
+            li = ed.get(f'E{4 - int(ex)}')  # '0' -> 'E4', '1' -> 'E3', ..., '4' -> 'E0'
             if li is not None:
                 postfix = EricaDataset.postfix_l if idx_mri_left_right else EricaDataset.postfix_r
                 li.append(name + postfix)
