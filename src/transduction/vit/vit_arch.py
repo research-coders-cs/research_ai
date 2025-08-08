@@ -225,7 +225,9 @@ def main():
 
         from ..vit.vit_torch import stat_ds_paths, get_mri_ds_paths, MriDataset
         #ds_paths, class_names_sorted = get_mri_ds_paths('debug')
-        ds_paths, class_names_sorted = get_mri_ds_paths('erica')
+        ds_paths, class_names_sorted = get_mri_ds_paths('erica', root='datasets_mri/50-001')  # colab
+        #ds_paths, class_names_sorted = get_mri_ds_paths('erica', root='datasets_mri/50-001-100')  # debug
+
         stat_ds_paths(ds_paths)
 
         transf = lambda pil_img, idx_mri_left_right : transf_inner(
