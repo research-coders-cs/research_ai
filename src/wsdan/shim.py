@@ -1,4 +1,5 @@
-from ..transduction.vit.vit_torch import stat_ds_paths, build_dataset
+from ..transduction.vit.vit_torch import stat_ds_paths, build_dataset, \
+    get_mnist_ds_paths, get_thyroid_ds_paths, get_mri_ds_paths
 
 #---- ^^
 from PIL import Image

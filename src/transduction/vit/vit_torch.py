@@ -730,7 +730,7 @@ def main():
         n_epochs = 5
 
     if 1:  # case mnist-MriViT-MriDataset, LGTM
-        ds_paths = get_mnist_ds_paths()
+        ds_paths, _ = get_mnist_ds_paths()
         stat_ds_paths(ds_paths)
 
         train_set = MriDataset(

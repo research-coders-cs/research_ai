@@ -68,9 +68,10 @@ def slice_split(li_in_const, slice_in):
 
 def create_train_loader(train_ds_path, target_resize, batch_size, workers, with_doppler=False):
     #----!!!!
-    from ..net.doppler import get_to_doppler
-    dataset_doppler_root = train_ds_path['benign'][0].split('/')[0]
-    #print('@@ dataset_doppler_root:', dataset_doppler_root)
+    if 0:
+        from ..net.doppler import get_to_doppler
+        dataset_doppler_root = train_ds_path['benign'][0].split('/')[0]
+        #print('@@ dataset_doppler_root:', dataset_doppler_root)
     #----!!!!
 
     train_dataset = ThyroidDataset(
@@ -200,7 +201,8 @@ def _train(with_doppler, total_epochs, model, ds_paths, savepath, config_doppler
 
     for k, dsp in ds_paths.items():
         if k in ['train', 'validate', 'kfold']:
-            print(f"@@ lens of ds_paths['{k}']:", len(dsp['benign']), len(dsp['malignant']))
+            for kk, vv in dsp.items():
+                print(f"@@ lens of ds_paths['{k}']['{kk}']: {len(vv)}")
         elif k == 'kfold_slices_val':
             print(f"@@ len(ds_paths['{k}']):", len(dsp))
         else:
@@ -268,6 +270,10 @@ def _train(with_doppler, total_epochs, model, ds_paths, savepath, config_doppler
         for tv_ds_path in kfold_ds_paths]
 
     #
+
+    num_classes = len(ds_paths['train'])
+    if num_classes > 2:
+        raise ValueError(f'todo - support num_classes: {num_classes}')
 
     num_attention_maps = 32  # @@ cf. 16 in 'main_legacy.py'
     net = WSDAN(num_classes=WSDAN_NUM_CLASSES, M=num_attention_maps, model=model, pretrained=True)

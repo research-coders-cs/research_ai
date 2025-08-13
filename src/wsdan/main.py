@@ -1,7 +1,8 @@
 from .demo import test as demo_test
 from .demo import train as demo_train
 from .demo import train_with_doppler as demo_train_with_doppler
-from .shim import stat_ds_paths, build_dataset
+from .shim import stat_ds_paths, build_dataset, \
+    get_mnist_ds_paths, get_thyroid_ds_paths, get_mri_ds_paths
 
 
 import logging
@@ -23,7 +24,7 @@ def main():
         ckpt = 'densenet_224_8_lr-1e5_n4_95.968.ckpt'  # 0.9xx, LGTM
         demo_test(ckpt, 'densenet121', TEST_DS_PATH_DEFAULT, 224, 8)
 
-    if 1:
+    if 0:
         total_epochs = 2
         #model = 'densenet121'
         model = 'resnet34'
@@ -121,6 +122,24 @@ def main():
 
         ##demo_test('xxxx/ckpt', 'resnet34', test_ds_path)
         demo_test('densenet121_250_8_lr-1e5_n4', 'densenet121', test_ds_path)
+
+    if 1:  # !!!! non binary class
+        total_epochs = 2
+        model = 'resnet34'
+
+        #ds_paths, class_names_sorted = get_thyroid_ds_paths('100g', debug=False)
+        ds_paths, class_names_sorted = get_mnist_ds_paths()  # mnist 10-class !!!!
+        #ds_paths, class_names_sorted = get_mri_ds_paths()  # erica 4-class !!!!
+
+        stat_ds_paths(ds_paths)
+
+        ds_path_train = todo_split(ds_paths['train'])  # !!!! todo ##
+        ds_path_validate = todo_split(ds_paths['train'])  # !!!! todo ##
+        ds_path_test = ds_paths['test']
+
+        ckpt = demo_train(total_epochs, model,
+                          { 'train': ds_path_train, 'validate': ds_path_validate })
+        #demo_test(ckpt, model, ds_path_test)
 
 
 if __name__ == '__main__':
