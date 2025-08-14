@@ -202,7 +202,7 @@ def _train(with_doppler, total_epochs, model, ds_paths, savepath, config_doppler
     for k, dsp in ds_paths.items():
         if k in ['train', 'validate', 'kfold']:
             for kk, vv in dsp.items():
-                print(f"@@ lens of ds_paths['{k}']['{kk}']: {len(vv)}")
+                print(f"@@ len of ds_paths['{k}']['{kk}']: {len(vv)}")
         elif k == 'kfold_slices_val':
             print(f"@@ len(ds_paths['{k}']):", len(dsp))
         else:

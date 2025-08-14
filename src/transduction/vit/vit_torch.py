@@ -242,6 +242,7 @@ class MriDataset(Dataset):
 import os
 import glob
 from typing import Dict
+import random
 
 def build_dataset(datasource: Dict[str, str], root="", ext="*.png"):
     datasets = {}
@@ -273,6 +274,22 @@ def stat_ds_paths(ds_paths):
             raise ValueError(f'unknown ds_paths key: {k}')
 
     print("@@ stat_ds_paths(): ---- $$")
+
+
+def random_split_li(li_in, li_sz):
+    cp = li_in[:]
+    random.shuffle(cp)  # in place
+
+    if len(li_sz) != 2:
+        raise ValueError('@@ Unsupported case: len(li_sz) != 2')
+    sz1 = li_sz[0]
+    sz2 = li_sz[1]
+    sp1 = cp[:sz1]
+    sp2 = cp[sz1:]
+    if len(sp1) + len(sp2) != sz1 + sz2:
+        raise ValueError('@@ Post-split lenth check failed')
+
+    return sp1, sp2
 #-------- $$
 
 
