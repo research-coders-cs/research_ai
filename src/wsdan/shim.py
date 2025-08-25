@@ -1,4 +1,4 @@
-from ..transduction.vit.vit_torch import stat_ds_paths, random_split_li, build_dataset, \
+from ..transduction.vit.vit_torch import stat_ds_paths, random_split_ds_path, build_dataset, \
     get_mnist_ds_paths, get_thyroid_ds_paths, get_mri_ds_paths
 
 #---- ^^

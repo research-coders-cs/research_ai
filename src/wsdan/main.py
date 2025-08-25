@@ -1,7 +1,7 @@
 from .demo import test as demo_test
 from .demo import train as demo_train
 from .demo import train_with_doppler as demo_train_with_doppler
-from .shim import stat_ds_paths, random_split_li, build_dataset, \
+from .shim import stat_ds_paths, random_split_ds_path, build_dataset, \
     get_mnist_ds_paths, get_thyroid_ds_paths, get_mri_ds_paths
 
 
@@ -133,24 +133,11 @@ def main():
 
         stat_ds_paths(ds_paths)
 
-        # [ ] refactor as `random_split_ds_paths()`
+        ds_path_train, ds_path_validate = random_split_ds_path(
+            ds_paths['train'], li_percent=[80, 20])
 
-        ds_path_train = {}
-        ds_path_validate = {}
-        for label, li in ds_paths['train'].items():
-            sz = len(li)
-            sz_train = int(sz * 0.8)  # 80%
-            sz_validate = sz - sz_train  # 20%
-
-            li_train, li_validate = random_split_li(li, [sz_train, sz_validate])
-            #print(f'@@ [{label}] len(li_<train,validate>):', len(li_train), len(li_validate))
-            ds_path_train[label] = li_train
-            ds_path_validate[label] = li_validate
-
-        #
-
-        ckpt = demo_train(total_epochs, model,
-                          { 'train': ds_path_train, 'validate': ds_path_validate })
+        ckpt = demo_train(total_epochs, model, {
+            'train': ds_path_train, 'validate': ds_path_validate })
 
         ds_path_test = ds_paths['test']
         #demo_test(ckpt, model, ds_path_test)

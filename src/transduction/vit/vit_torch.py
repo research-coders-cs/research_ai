@@ -290,6 +290,28 @@ def random_split_li(li_in, li_sz):
         raise ValueError('@@ Post-split lenth check failed')
 
     return sp1, sp2
+
+def random_split_ds_path(ds_path, li_percent):
+    if len(li_percent) != 2:
+        raise ValueError('@@ Unsupported case: len(li_percent) != 2')
+    elif sum(li_percent) != 100:
+        raise ValueError('@@ Unsupported case: sum(li_percent) != 100')
+
+    ds_path_1 = {}
+    ds_path_2 = {}
+    for label, li in ds_path.items():
+        sz = len(li)
+        sz_1 = int(sz * li_percent[0] / 100)
+        sz_2 = sz - sz_1
+
+        li_1, li_2 = random_split_li(li, [sz_1, sz_2])
+        #print(f'@@ [{label}] len(li_<train,validate>):', len(li_1), len(li_2))
+        ds_path_1[label] = li_1
+        ds_path_2[label] = li_2
+
+    return ds_path_1, ds_path_2
+
+
 #-------- $$
 
 
