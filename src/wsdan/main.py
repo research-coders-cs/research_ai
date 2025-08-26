@@ -135,11 +135,11 @@ def main():
 
         ds_path_train, ds_path_validate = random_split_ds_path(
             ds_paths['train'], li_percent=[80, 20])
-
-        ckpt = demo_train(total_epochs, model, {
-            'train': ds_path_train, 'validate': ds_path_validate })
-
         ds_path_test = ds_paths['test']
+
+        ds_paths_adapted = { 'train': ds_path_train, 'validate': ds_path_validate }
+        ckpt = demo_train(total_epochs, model, ds_paths_adapted)
+
         #demo_test(ckpt, model, ds_path_test)
 
 

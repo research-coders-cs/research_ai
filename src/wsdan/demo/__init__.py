@@ -8,8 +8,6 @@ from .transform import get_transform
 from .utils import mk_artifact_dir, get_device
 
 
-WSDAN_NUM_CLASSES = 2
-
 TRAIN_DS_PATH_DEFAULT = build_dataset({
     'benign': ['Train/Benign'],
     'malignant': ['Train/Malignant'],
@@ -272,13 +270,11 @@ def _train(with_doppler, total_epochs, model, ds_paths, savepath, config_doppler
     #
 
     num_classes = len(ds_paths['train'])
-    if num_classes > 2:
-        raise ValueError(f'todo - support num_classes: {num_classes}')
-
     num_attention_maps = 32  # @@ cf. 16 in 'main_legacy.py'
-    net = WSDAN(num_classes=WSDAN_NUM_CLASSES, M=num_attention_maps, model=model, pretrained=True)
+
+    net = WSDAN(num_classes, M=num_attention_maps, model=model, pretrained=True)
     net.to(device)
-    feature_center = torch.zeros(WSDAN_NUM_CLASSES, num_attention_maps * net.num_features).to(device)
+    feature_center = torch.zeros(num_classes, num_attention_maps * net.num_features).to(device)
 
     #
 
@@ -364,7 +360,6 @@ def test(ckpt, model=MODEL_DEFAULT, ds_path=TEST_DS_PATH_DEFAULT,
     print("@@ device:", device)
 
     #print('@@ ds_path:', ds_path)
-    print("@@ lens ds_path:", len(ds_path['benign']), len(ds_path['malignant']))
 
     test_dataset = ThyroidDataset(
         phase='test',
@@ -385,7 +380,7 @@ def test(ckpt, model=MODEL_DEFAULT, ds_path=TEST_DS_PATH_DEFAULT,
 
     #
 
-    net = WSDAN(num_classes=WSDAN_NUM_CLASSES, M=num_attention_maps, model=model, pretrained=True)
+    net = WSDAN(num_classes=len(ds_path), M=num_attention_maps, model=model, pretrained=True)
     net.to(device)
 
     sp = mk_artifact_dir(f'demo_thyroid_test_{tag}')
