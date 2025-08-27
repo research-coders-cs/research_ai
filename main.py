@@ -96,7 +96,7 @@ if __name__ == '__main__':
         exit()
 
     if 1:  # wsdan (post wsdan-0.3.21)
-        from src.wsdan.main import main as wsdan_main
+        from src.transduction.wsdan.main import main as wsdan_main
 
         wsdan_main()
         exit()
