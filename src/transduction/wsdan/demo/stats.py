@@ -10,7 +10,7 @@ def softmax(x):
     e_x = np.exp(x - np.max(x))
     return e_x / e_x.sum()
 
-def print_scores(results):  # @@
+def print_scores(results):  # OBSOLETE
     pred = results[2]
     true = results[3]
     _score = 0
@@ -25,7 +25,7 @@ def print_scores(results):  # @@
 
     print(f'@@ Accuracy: (# of ✅) / (# of Cases) = {_score} / {len(pred)} = %0.3f' % (_score / len(pred)))
 
-def print_auc(results, test_size, plot=False, plot_savepath=None):  # @@
+def print_auc(results, test_size, plot=False, plot_savepath=None):  # OBSOLETE
     from sklearn.metrics import roc_curve, auc, roc_auc_score
 
     # Compute ROC curve and ROC area for each class

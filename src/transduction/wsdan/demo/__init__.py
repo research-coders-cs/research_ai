@@ -387,11 +387,11 @@ def test(ckpt, model=MODEL_DEFAULT, ds_path=TEST_DS_PATH_DEFAULT,
     results = net_test.test(device, net, batch_size, test_loader, ckpt, savepath=sp)
     # print('@@ results:', results)
 
-    if 1:
+    if 0:  # OBSOLETE
         print('\n\n@@ ======== print_scores(results)')
         print_scores(results)
 
-    if 1:
+    if 0:  # OBSOLETE
         print(f'\n\n@@ ======== print_poa(results)')
         print_poa(results)
 
@@ -399,3 +399,5 @@ def test(ckpt, model=MODEL_DEFAULT, ds_path=TEST_DS_PATH_DEFAULT,
         _enable_plot = True  # !!
         print(f'\n\n@@ ======== print_auc(results, plot={_enable_plot}), plot_savepath="{sp}"')
         print_auc(results, len(test_dataset), plot=_enable_plot, plot_savepath=sp)
+
+    return results
