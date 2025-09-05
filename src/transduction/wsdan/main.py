@@ -123,13 +123,15 @@ def main():
         ##demo_test('xxxx/ckpt', 'resnet34', test_ds_path)
         demo_test('densenet121_250_8_lr-1e5_n4', 'densenet121', test_ds_path)
 
-    if 1:  # !!!! non-binary class
+    if 1:  # non-binary classification
         total_epochs = 2
         model = 'resnet34'
 
         #ds_paths, class_names_sorted = get_thyroid_ds_paths('100g', debug=False)
-        ds_paths, class_names_sorted = get_mnist_ds_paths()  # mnist 10-class !!!!
-        #ds_paths, class_names_sorted = get_mri_ds_paths()  # erica 4-class !!!!
+        ds_paths, class_names_sorted = get_mnist_ds_paths(  # mnist 10-class
+            root_train='datasets_vit/pngs/train--sparse',  # 128 samples
+            root_test='datasets_vit/pngs/test--sparse')  # 10 samples
+        #ds_paths, class_names_sorted = get_mri_ds_paths()  # erica 4-class !!!! TODO
 
         stat_ds_paths(ds_paths)
 
@@ -138,9 +140,44 @@ def main():
         ds_path_test = ds_paths['test']
 
         ds_paths_adapted = { 'train': ds_path_train, 'validate': ds_path_validate }
-        ckpt = demo_train(total_epochs, model, ds_paths_adapted)
+        ##ckpt = demo_train(total_epochs, model, ds_paths_adapted)
 
-        #demo_test(ckpt, model, ds_path_test)
+        #ckpt = 'output--pc-wsdan-mnist-sparse/demo_train/resnet34_250_8_lr-1e5_n4'  # 2/10 poor
+        #ckpt = 'output--colab-wsdan-mnist/eps2/resnet34_250_8_lr-1e5_n4'  # eps=2, test 4/10 poor
+        ckpt = 'output--colab-wsdan-mnist/eps8/resnet34_250_8_lr-1e5_n4'  # eps=8, test 7/10
+        results = demo_test(ckpt, model, ds_path_test)
+        print_scores_debug(results, class_names_sorted)
+
+
+#==== TOOO adapt
+    # y_true, y_pred = model.custom_test(device, test_dataloader)
+    # get_confusion_matrix(y_true, y_pred, class_names_sorted)
+#==== debug
+import torch
+import numpy as np
+from .demo.stats import softmax
+def print_scores_debug(results, class_names_sorted):
+    pred = results[2]
+    true = results[3]
+    # print(pred, true)  # !!!!
+    # print(class_names_sorted)  # !!!!
+    _score = 0
+
+    with np.printoptions(formatter={'float': '{:.2e}'.format}):
+        for (i, (y_hat,y)) in enumerate(zip(pred,true)):
+            _pred = torch.argmax(y_hat)
+            _pred_name = class_names_sorted[int(_pred)]
+            _true = y
+            _true_name = class_names_sorted[int(_true)]
+            check = '✅' if _pred == _true else '❌'
+
+            if _pred == _true:
+                _score += 1
+
+            print("Case {}--{} {} (Pred={}, True={})".format(
+                i + 1, softmax(y_hat.cpu().numpy()), check, _pred_name, _true_name))
+
+    print(f'@@ Accuracy: (# of ✅) / (# of Cases) = {_score} / {len(pred)} = %0.3f' % (_score / len(pred)))
 
 
 if __name__ == '__main__':

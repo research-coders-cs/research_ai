@@ -599,15 +599,12 @@ class MriViT(nn.Module):
         super(MriViT, self).load_state_dict(model_dict)
 
 #-------- ^^ loaders
-def get_mnist_ds_paths(debug=False):
+def get_mnist_ds_paths(root_train='datasets_vit/pngs/train', root_test='datasets_vit/pngs/test'):
     class_dir_map = { f'mnist_{y}': f'y_{y}' for y in range(10) }
     ds_paths = {
-        'train': build_dataset(class_dir_map, root='datasets_vit/pngs/train'),
-        'test': build_dataset(class_dir_map, root='datasets_vit/pngs/test'),
+        'train': build_dataset(class_dir_map, root=root_train),
+        'test': build_dataset(class_dir_map, root=root_test),
     }
-
-    if debug:
-        stat_ds_paths(ds_paths)
 
     return ds_paths, sorted(class_dir_map.keys())
 
