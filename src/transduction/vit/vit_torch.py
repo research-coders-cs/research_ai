@@ -258,17 +258,22 @@ def build_dataset(datasource: Dict[str, str], root="", ext="*.png"):
     return datasets
 
 
+def _dsp_info(dsp):
+    total = 0
+    details = []
+    for label in dsp.keys():
+        ln = len(dsp[label])
+        total += ln
+        details.append(f'label={label} {ln}')
+
+    return total, details
+
 def stat_ds_paths(ds_paths):
     print("@@ stat_ds_paths(): ---- ^^")
 
     for phase, dsp in ds_paths.items():
         if phase in ['train', 'test', 'validate']:
-            total = 0
-            details = []
-            for label in dsp.keys():
-                ln = len(dsp[label])
-                total += ln
-                details.append(f'label={label} {ln}')
+            total, details = _dsp_info(dsp)
             print(f"@@ lens of ds_paths['{phase}']: total: {total} {details}")
         else:
             raise ValueError(f'unknown ds_paths key: {k}')
