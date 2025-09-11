@@ -198,7 +198,7 @@ class CustomMriDataset(Dataset):
         total = sum(hg.values())
         if total != len(self):
             print(f'histogram WARNING: sum(={total}) and len(={len(self)}) do not agree!')
-        return f'total: {total} {hg}', total, hg
+        return f'total={total} classes={hg}'
 
 
 def main():
@@ -250,7 +250,7 @@ def main():
             dataset=ds_paths['train'],
             transform=transf)
 
-        #==== old; to remove
+        #==== old; to remove 1111
         # #train_set, test_set, _ = random_split(data_set, [90, 10, len(data_set)-100])
         # train_set, test_set = random_split(data_set, [1100, 100])  # colab
         # #train_set, test_set = random_split(data_set, [180, 22])  # debug 'datasets_mri/50-001-100'
@@ -266,12 +266,12 @@ def main():
         val_dataset = CustomMriDataset(train_set_train)
         test_dataset = CustomMriDataset(test_set)
 
-        print(f'train_dataset: {train_dataset.get_histogram(class_names_sorted)[0]}')
-        print(f'val_dataset: {val_dataset.get_histogram(class_names_sorted)[0]}')
-        print(f'test_dataset: {test_dataset.get_histogram(class_names_sorted)[0]}')
+        print(f'train_dataset: {train_dataset.get_histogram(class_names_sorted)}')
+        print(f'val_dataset: {val_dataset.get_histogram(class_names_sorted)}')
+        print(f'test_dataset: {test_dataset.get_histogram(class_names_sorted)}')
         #====
 
-        raise Exception("!!!! ok")
+        raise Exception("!!!! ok")  # 1111
 
     if 0:  # @@ dev; mnist
         #====
