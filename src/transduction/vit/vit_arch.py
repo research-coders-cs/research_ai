@@ -189,6 +189,18 @@ class CustomMriDataset(Dataset):
         # c.f. `MriDatasetAdapter` in 'vit_finetune/main.py'
         return self.ds[idx]  # pixels, class_index, extra
 
+    def get_histogram(self, class_names_sorted):
+        hg = {label: 0 for label in class_names_sorted}
+        for item in self.ds:
+            label = item[2]['label']
+            hg[label] += 1
+
+        total = sum(hg.values())
+        if total != len(self):
+            print(f'histogram WARNING: sum(={total}) and len(={len(self)}) do not agree!')
+        return f'total: {total} {hg}', total, hg
+
+
 def main():
 
     print('@@ vit arch !!')
@@ -238,14 +250,28 @@ def main():
             dataset=ds_paths['train'],
             transform=transf)
 
-        #train_set, test_set, _ = random_split(data_set, [90, 10, len(data_set)-100])
-        train_set, test_set = random_split(data_set, [1100, 100])  # colab
-        #train_set, test_set = random_split(data_set, [180, 22])  # debug 'datasets_mri/50-001-100'
+        #==== old; to remove
+        # #train_set, test_set, _ = random_split(data_set, [90, 10, len(data_set)-100])
+        # train_set, test_set = random_split(data_set, [1100, 100])  # colab
+        # #train_set, test_set = random_split(data_set, [180, 22])  # debug 'datasets_mri/50-001-100'
+        #
+        # train_dataset = CustomMriDataset(train_set)
+        # test_dataset = CustomMriDataset(test_set)
+        # print('len({train,test}_dataset):', len(train_dataset), len(test_dataset))
+        #==== !!!! add validation support
+        #train_set_train, train_set_val, test_set = random_split(data_set, [1000, 100, 100])  # colab
+        train_set_train, train_set_val, test_set, _ = random_split(data_set, [80, 10, 10, len(data_set)-100])
 
-        train_dataset = CustomMriDataset(train_set)
+        train_dataset = CustomMriDataset(train_set_train)
+        val_dataset = CustomMriDataset(train_set_train)
         test_dataset = CustomMriDataset(test_set)
 
-        print('len({train,test}_dataset):', len(train_dataset), len(test_dataset))
+        print(f'train_dataset: {train_dataset.get_histogram(class_names_sorted)[0]}')
+        print(f'val_dataset: {val_dataset.get_histogram(class_names_sorted)[0]}')
+        print(f'test_dataset: {test_dataset.get_histogram(class_names_sorted)[0]}')
+        #====
+
+        raise Exception("!!!! ok")
 
     if 0:  # @@ dev; mnist
         #====
