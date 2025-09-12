@@ -149,11 +149,9 @@ from torch.utils.data import Dataset
 
 class MriDataset(Dataset):
 
-    def __init__(self, phase, dataset, transform):
-        assert phase is not None
+    def __init__(self, dataset, transform):
         assert dataset is not None
         assert transform is not None
-        self.phase = phase
         self.dataset = dataset
         self.partition = [(k, len(v)) for k, v in sorted(dataset.items())]
         self.transform = transform
@@ -185,27 +183,29 @@ class MriDataset(Dataset):
         }
         #print(f'@@ __getitem__(): index: {index} extra: {extra}')
 
-        if path.startswith('datasets_mri00/'):  # !! legacy
-            erica_tensor = imread_as_tensor_mri(plt, path)
-            erica_crops = crop_erica_tensor(erica_tensor)
-
-            transformed = erica_crops[0]  # left
-            ##transformed = erica_crops[1]  # right
-            ##transformed = torch.zeros(1, 320, 160)  # erica_crops[0] or erica_crops[1]
-        elif self.phase.startswith('finetune_'):
-            if path.endswith('?erica=l'):  # !! crude
-                transformed = self.transform(
-                    pil_image_open(path.replace('?erica=l', '')).convert('RGB'), 0)
-            elif path.endswith('?erica=r'):  # !! crude
-                transformed = self.transform(
-                    pil_image_open(path.replace('?erica=r', '')).convert('RGB'), 1)
-            else:
-                transformed = self.transform(
-                    pil_image_open(path).convert('RGB'))
-        else:  # !! legacy
-            tens = imread_as_tensor_mri(plt, path)
-            transformed = self.transform(tens)
-            #print(f'@@ [preprocessing] {tens.shape} -> {transformed.shape}')
+        #==== legacy
+        # if path.startswith('datasets_mri00/'):
+        #     erica_tensor = imread_as_tensor_mri(plt, path)
+        #     erica_crops = crop_erica_tensor(erica_tensor)
+        #
+        #     transformed = erica_crops[0]  # left
+        #     ##transformed = erica_crops[1]  # right
+        #     ##transformed = torch.zeros(1, 320, 160)  # erica_crops[0] or erica_crops[1]
+        # else:
+        #     tens = imread_as_tensor_mri(plt, path)
+        #     transformed = self.transform(tens)
+        #     #print(f'@@ [preprocessing] {tens.shape} -> {transformed.shape}')
+        #====
+        if path.endswith('?erica=l'):
+            transformed = self.transform(
+                pil_image_open(path.replace('?erica=l', '')).convert('RGB'), 0)
+        elif path.endswith('?erica=r'):
+            transformed = self.transform(
+                pil_image_open(path.replace('?erica=r', '')).convert('RGB'), 1)
+        else:
+            transformed = self.transform(
+                pil_image_open(path).convert('RGB'))
+        #====
 
         return transformed, class_index, extra
 
@@ -707,11 +707,9 @@ def create_mri_data(ds_paths, target_resize):
     print('@@ target_resize:', target_resize)
 
     train_set = MriDataset(
-        phase='train',
         dataset=ds_paths['train'],
         transform=get_transform_mri(target_resize, phase='train'))
     test_set = MriDataset(
-        phase='test',
         dataset=ds_paths['test'],
         transform=get_transform_mri(target_resize, phase='test'))
 
@@ -775,11 +773,9 @@ def main():
         stat_ds_paths(ds_paths)
 
         train_set = MriDataset(
-            phase='train',
             dataset=ds_paths['train'],
             transform=get_transform_mri((28, 28), phase='train'))
         test_set = MriDataset(
-            phase='test',
             dataset=ds_paths['test'],
             transform=get_transform_mri((28, 28), phase='test'))
 
