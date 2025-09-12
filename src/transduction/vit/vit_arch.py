@@ -113,7 +113,7 @@ class CustomViT(nn.Module):
             return logits, encoder_outputs.attentions
         return logits
 
-    def custom_train(self, device, optimizer, loss_fn, epoch_n, train_dataloader):
+    def custom_train(self, device, optimizer, loss_fn, epoch_n, train_dataloader, val_dataloader=None):
         for epoch in range(epoch_n):
             epoch_loss = 0.0
             for batch in train_dataloader:
@@ -198,7 +198,7 @@ class CustomMriDataset(Dataset):
         total = sum(hg.values())
         if total != len(self):
             print(f'histogram WARNING: sum(={total}) and len(={len(self)}) do not agree!')
-        return f'total={total} classes={hg}'
+        return f'total={total} {hg}'
 
 
 def main():
@@ -223,7 +223,35 @@ def main():
 
         mnist = load_dataset("mnist")
         train_dataset = CustomMnistDataset(mnist["train"], transform=transform)
+        val_dataset = None
         test_dataset = CustomMnistDataset(mnist["test"], transform=transform)
+
+        #print('@@ type(train_dataset[0]):', type(train_dataset[0]))  # <class 'tuple'>
+
+        if 0:  # @@ dev; mnist
+            #====
+            len_train, len_test = 60, 10  # 0.1%; for dev iter
+            #====
+            #len_train, len_test = 6000, 1000  # 10%
+            """ vit_arch_mri_1v1.ipynb
+            Epoch 1/8, Average Loss: 1.4045
+            Epoch 2/8, Average Loss: 0.8155
+            Epoch 3/8, Average Loss: 0.5848
+            Epoch 4/8, Average Loss: 0.4377
+            Epoch 5/8, Average Loss: 0.3257
+            Epoch 6/8, Average Loss: 0.2456
+            Epoch 7/8, Average Loss: 0.2265
+            Epoch 8/8, Average Loss: 0.1638
+            Model saved to custom_vit_mnist.pth
+            Test Accuracy: 87.50%
+            """
+            #====
+
+            train_dataset, _ = random_split(train_dataset, [len_train, len(train_dataset) - len_train])
+            test_dataset, _ = random_split(test_dataset, [len_test, len(test_dataset) - len_test])
+            print('@@ !! train/test dataset shortened')
+        else:
+            pass  # 60000, 10000  # 100%
     #==== mri-erica
     if 1:
         processor = CustomViT.get_image_processor()
@@ -250,62 +278,23 @@ def main():
             dataset=ds_paths['train'],
             transform=transf)
 
-        #==== old; to remove 1111
-        # #train_set, test_set, _ = random_split(data_set, [90, 10, len(data_set)-100])
-        # train_set, test_set = random_split(data_set, [1100, 100])  # colab
-        # #train_set, test_set = random_split(data_set, [180, 22])  # debug 'datasets_mri/50-001-100'
-        #
-        # train_dataset = CustomMriDataset(train_set)
-        # test_dataset = CustomMriDataset(test_set)
-        # print('len({train,test}_dataset):', len(train_dataset), len(test_dataset))
-        #==== !!!! add validation support
         #train_set_train, train_set_val, test_set = random_split(data_set, [1000, 100, 100])  # colab
         train_set_train, train_set_val, test_set, _ = random_split(data_set, [80, 10, 10, len(data_set)-100])
 
         train_dataset = CustomMriDataset(train_set_train)
-        val_dataset = CustomMriDataset(train_set_train)
+        val_dataset = CustomMriDataset(train_set_val)
         test_dataset = CustomMriDataset(test_set)
+    #====
 
-        print(f'train_dataset: {train_dataset.get_histogram(class_names_sorted)}')
+    print(f'train_dataset: {train_dataset.get_histogram(class_names_sorted)}')
+    if val_dataset is not None:
         print(f'val_dataset: {val_dataset.get_histogram(class_names_sorted)}')
-        print(f'test_dataset: {test_dataset.get_histogram(class_names_sorted)}')
-        #====
-
-        raise Exception("!!!! ok")  # 1111
-
-    if 0:  # @@ dev; mnist
-        #====
-        len_train, len_test = 60, 10  # 0.1%; for dev iter
-        #====
-        #len_train, len_test = 6000, 1000  # 10%
-        """ vit_arch_mri_1v1.ipynb
-Epoch 1/8, Average Loss: 1.4045
-Epoch 2/8, Average Loss: 0.8155
-Epoch 3/8, Average Loss: 0.5848
-Epoch 4/8, Average Loss: 0.4377
-Epoch 5/8, Average Loss: 0.3257
-Epoch 6/8, Average Loss: 0.2456
-Epoch 7/8, Average Loss: 0.2265
-Epoch 8/8, Average Loss: 0.1638
-Model saved to custom_vit_mnist.pth
-Test Accuracy: 87.50%
-        """
-        #====
-
-        train_dataset, _ = random_split(train_dataset, [len_train, len(train_dataset) - len_train])
-        test_dataset, _ = random_split(test_dataset, [len_test, len(test_dataset) - len_test])
-        print('@@ !! train/test dataset shortened')
-    # else:
-    #     pass  # 60000, 10000  # 100%
-
-    print('@@ len(train_dataset):', len(train_dataset))
-    print('@@ len(test_dataset):', len(test_dataset))
-
-    print('@@ type(train_dataset[0]):', type(train_dataset[0]))  # <class 'tuple'>
+    print(f'test_dataset: {test_dataset.get_histogram(class_names_sorted)}')
 
     ##
 
     train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+    val_dataloader = None if val_dataset is None else DataLoader(val_dataset, batch_size=32, shuffle=True)
     test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=False)
     test_dataloader_bs1 = DataLoader(test_dataset, batch_size=1, shuffle=False)  # for attention debug
 
@@ -323,6 +312,7 @@ Test Accuracy: 87.50%
     #MODEL_PATH = "custom_vit_erica_colab_8eps.pth"  # full: [1100, 100]
     MODEL_PATH = "custom_vit_erica_colab_20eps.pth"  # full: [1100, 100], latest (@@ torch.__version__: 2.6.0+cu124)
 
+    raise Exception("!!!! ok")  # wip
 
     if 0:  # do training?
         optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-2)
@@ -332,7 +322,8 @@ Test Accuracy: 87.50%
         epoch_n = 1  # !!!
 
         model.train()
-        model.custom_train(device, optimizer, loss_fn, epoch_n, train_dataloader)
+        model.custom_train(device, optimizer, loss_fn, epoch_n, train_dataloader,
+                           val_dataloader=val_dataloader)
 
         torch.save(model.state_dict(), MODEL_PATH)
         print(f"Model saved to {MODEL_PATH}")
