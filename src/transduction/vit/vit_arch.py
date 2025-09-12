@@ -178,16 +178,20 @@ class CustomMnistDataset(Dataset):
         return image, label
 
 
-class CustomMriDataset(MriDataset):
-    def __init__(self, ds):
-        self.ds = ds
+class CustomMriDataset(Dataset):
+    def __init__(self, ds_path, _ds=None):
+        transf = CustomMriDataset.get_transform()
+        self.transf = transf
+        self.ds = _ds if _ds is not None else MriDataset(dataset=ds_path, transform=transf)
 
     def __len__(self):
         return len(self.ds)
 
     def __getitem__(self, idx):
-        # c.f. `MriDatasetAdapter` in 'vit_finetune/main.py'
         return self.ds[idx]  # pixels, class_index, extra
+
+    def random_split(self, li):
+        return [CustomMriDataset(None, _ds=sub) for sub in random_split(self.ds, li)]
 
     def get_histogram(self, class_names_sorted):
         hg = {label: 0 for label in class_names_sorted}
@@ -199,6 +203,20 @@ class CustomMriDataset(MriDataset):
         if total != len(self):
             print(f'histogram WARNING: sum(={total}) and len(={len(self)}) do not agree!')
         return f'total={total} {hg}'
+
+    @staticmethod
+    def get_transform():
+        processor = CustomViT.get_image_processor()
+        #print('@@ processor:', processor)
+
+        transf_inner = transforms.Compose([
+            transforms.Resize((processor.size['height'], processor.size['width'])),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=processor.image_mean, std=processor.image_std),
+        ])
+
+        return lambda pil_img, idx_mri_left_right : transf_inner(
+            MriDataset.erica_crop_pil(pil_img, idx_mri_left_right))
 
 
 def main():
@@ -254,39 +272,18 @@ def main():
             pass  # 60000, 10000  # 100%
     #==== mri-erica
     if 1:
-        processor = CustomViT.get_image_processor()
-        print('@@ processor:', processor)
-
-        transf_inner = transforms.Compose([
-            transforms.Resize((processor.size['height'], processor.size['width'])),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=processor.image_mean, std=processor.image_std),
-        ])
-
         #ds_paths, class_names_sorted = get_mri_ds_paths('debug')
         ds_paths, class_names_sorted = get_mri_ds_paths('erica', root='datasets_mri/50-001')  # colab
         #ds_paths, class_names_sorted = get_mri_ds_paths('erica', root='datasets_mri/50-001-100')  # debug
 
         stat_ds_paths(ds_paths)
 
-        transf = lambda pil_img, idx_mri_left_right : transf_inner(
-            MriDataset.erica_crop_pil(pil_img, idx_mri_left_right))
+        cmds = CustomMriDataset(ds_paths['train'])
 
-        #========
-        if 1:
-            data_set = MriDataset(dataset=ds_paths['train'], transform=transf)
+        #train_dataset, val_dataset, test_dataset = cmds.random_split(dataset, [1000, 100, 100])  # colab
+        train_dataset, val_dataset, test_dataset, _ = cmds.random_split([80, 10, 10, len(cmds)-100])
 
-            #train_set_train, train_set_val, test_set = random_split(data_set, [1000, 100, 100])  # colab
-            train_set_train, train_set_val, test_set, _ = random_split(data_set, [80, 10, 10, len(data_set)-100])
-        else:  # wip
-            train_set_train = MriDataset(dataset=dsp_train, transform=transf)
-            train_set_val = MriDataset(dataset=dsp_val, transform=transf)
-            train_set_test = MriDataset(dataset=dsp_test, transform=transf)
-        #========
-
-        train_dataset = CustomMriDataset(train_set_train)
-        val_dataset = CustomMriDataset(train_set_val)
-        test_dataset = CustomMriDataset(test_set)
+        #print(train_dataset[0])  # ok
     #====
 
     print(f'train_dataset: {train_dataset.get_histogram(class_names_sorted)}')
