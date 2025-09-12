@@ -413,11 +413,9 @@ def main():
         # Build: {train,test}_set
 
         train_set = MriDataset(
-            phase='finetune_train',
             dataset=ds_paths['train'],
             transform=transf)
         test_set = MriDataset(
-            phase='finetune_test',
             dataset=ds_paths['test'],
             transform=transf)
 

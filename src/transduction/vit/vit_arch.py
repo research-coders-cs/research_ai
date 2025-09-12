@@ -11,7 +11,7 @@ from torchvision import transforms
 
 from .bs1_atten import Bs1Atten
 from ..plot_if import get_confusion_matrix
-
+from ..vit.vit_torch import stat_ds_paths, get_mri_ds_paths, MriDataset
 
 """
 It’s absolutely possible to customize the model architecture while retaining the
@@ -178,7 +178,7 @@ class CustomMnistDataset(Dataset):
         return image, label
 
 
-class CustomMriDataset(Dataset):
+class CustomMriDataset(MriDataset):
     def __init__(self, ds):
         self.ds = ds
 
@@ -263,7 +263,6 @@ def main():
             transforms.Normalize(mean=processor.image_mean, std=processor.image_std),
         ])
 
-        from ..vit.vit_torch import stat_ds_paths, get_mri_ds_paths, MriDataset
         #ds_paths, class_names_sorted = get_mri_ds_paths('debug')
         ds_paths, class_names_sorted = get_mri_ds_paths('erica', root='datasets_mri/50-001')  # colab
         #ds_paths, class_names_sorted = get_mri_ds_paths('erica', root='datasets_mri/50-001-100')  # debug
@@ -273,13 +272,17 @@ def main():
         transf = lambda pil_img, idx_mri_left_right : transf_inner(
             MriDataset.erica_crop_pil(pil_img, idx_mri_left_right))
 
-        data_set = MriDataset(
-            phase='finetune_train',
-            dataset=ds_paths['train'],
-            transform=transf)
+        #========
+        if 1:
+            data_set = MriDataset(dataset=ds_paths['train'], transform=transf)
 
-        #train_set_train, train_set_val, test_set = random_split(data_set, [1000, 100, 100])  # colab
-        train_set_train, train_set_val, test_set, _ = random_split(data_set, [80, 10, 10, len(data_set)-100])
+            #train_set_train, train_set_val, test_set = random_split(data_set, [1000, 100, 100])  # colab
+            train_set_train, train_set_val, test_set, _ = random_split(data_set, [80, 10, 10, len(data_set)-100])
+        else:  # wip
+            train_set_train = MriDataset(dataset=dsp_train, transform=transf)
+            train_set_val = MriDataset(dataset=dsp_val, transform=transf)
+            train_set_test = MriDataset(dataset=dsp_test, transform=transf)
+        #========
 
         train_dataset = CustomMriDataset(train_set_train)
         val_dataset = CustomMriDataset(train_set_val)
