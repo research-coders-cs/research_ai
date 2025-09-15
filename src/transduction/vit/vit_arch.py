@@ -114,7 +114,7 @@ class CustomViT(nn.Module):
         return logits
 
     def custom_train(self, device, optimizer, loss_fn, epoch_n, train_dataloader,
-                     val_dataloader=None, save_best_model=True, save_path="best_model.pth"):
+                     val_dataloader=None, save_best_val_model=True, save_path="best_val_model.pth"):
         best_val_accuracy = 0.0
         best_model_state = None
 
@@ -155,14 +155,14 @@ class CustomViT(nn.Module):
                 print(f"Epoch {epoch+1}/{epoch_n}, Validation Loss: {avg_val_loss:.4f}, Validation Accuracy: {val_accuracy:.2f}%")
 
                 # Save best model based on validation accuracy
-                if save_best_model and val_accuracy > best_val_accuracy:
+                if save_best_val_model and val_accuracy > best_val_accuracy:
                     best_val_accuracy = val_accuracy
                     best_model_state = self.state_dict()
                     torch.save(best_model_state, save_path)
-                    print(f"Saved best model with Validation Accuracy: {best_val_accuracy:.2f}%")
+                    print(f"Saved best model with Validation Accuracy: {best_val_accuracy:.2f}% (to {save_path})")
 
         # Load best model at the end of training
-        if save_best_model and best_model_state is not None:
+        if save_best_val_model and best_model_state is not None:
             self.load_state_dict(best_model_state)
             print(f"Loaded best model with Validation Accuracy: {best_val_accuracy:.2f}%")
 
@@ -361,10 +361,18 @@ def main():
         #epoch_n = 8
         epoch_n = 1  # !!!
 
-        model.custom_train(device, optimizer, loss_fn, epoch_n, train_dataloader,
-                           val_dataloader=val_dataloader)
+        save_best_val_model = True
+        if save_best_val_model:
+            model.custom_train(device, optimizer, loss_fn, epoch_n, train_dataloader,
+                               val_dataloader=val_dataloader,
+                               save_best_val_model=True,
+                               save_path=MODEL_PATH)
+        else:
+            model.custom_train(device, optimizer, loss_fn, epoch_n, train_dataloader,
+                               val_dataloader=val_dataloader,
+                               save_best_val_model=False)
+            torch.save(model.state_dict(), MODEL_PATH)
 
-        torch.save(model.state_dict(), MODEL_PATH)
         print(f"Model saved to {MODEL_PATH}")
     else:
         try:
