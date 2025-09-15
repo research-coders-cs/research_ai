@@ -113,9 +113,15 @@ class CustomViT(nn.Module):
             return logits, encoder_outputs.attentions
         return logits
 
-    def custom_train(self, device, optimizer, loss_fn, epoch_n, train_dataloader, val_dataloader=None):
+    def custom_train(self, device, optimizer, loss_fn, epoch_n, train_dataloader,
+                     val_dataloader=None, save_best_model=True, save_path="best_model.pth"):
+        best_val_accuracy = 0.0
+        best_model_state = None
+
         for epoch in range(epoch_n):
-            epoch_loss = 0.0
+            # Training phase
+            self.train()  # Set model to training mode
+            epoch_train_loss = 0.0
             for batch in train_dataloader:
                 pixels, labels, _extra = batch
                 pixels, labels = pixels.to(device), labels.to(device)
@@ -124,8 +130,42 @@ class CustomViT(nn.Module):
                 loss = loss_fn(outputs, labels)
                 loss.backward()
                 optimizer.step()
-                epoch_loss += loss.item()
-            print(f"Epoch {epoch+1}/{epoch_n}, Average Loss: {epoch_loss / len(train_dataloader):.4f}")
+                epoch_train_loss += loss.item()
+            avg_train_loss = epoch_train_loss / len(train_dataloader)
+            print(f"Epoch {epoch+1}/{epoch_n}, Average Training Loss: {avg_train_loss:.4f}")
+
+            # Validation phase (if val_dataloader is provided)
+            if val_dataloader is not None:
+                self.eval()  # Set model to evaluation mode
+                val_loss = 0.0
+                correct = 0
+                total = 0
+                with torch.no_grad():
+                    for batch in val_dataloader:
+                        pixels, labels, _extra = batch
+                        pixels, labels = pixels.to(device), labels.to(device)
+                        outputs = self(pixels)
+                        loss = loss_fn(outputs, labels)
+                        val_loss += loss.item()
+                        _, predicted = torch.max(outputs, 1)
+                        total += labels.size(0)
+                        correct += (predicted == labels).sum().item()
+                avg_val_loss = val_loss / len(val_dataloader)
+                val_accuracy = 100 * correct / total
+                print(f"Epoch {epoch+1}/{epoch_n}, Validation Loss: {avg_val_loss:.4f}, Validation Accuracy: {val_accuracy:.2f}%")
+
+                # Save best model based on validation accuracy
+                if save_best_model and val_accuracy > best_val_accuracy:
+                    best_val_accuracy = val_accuracy
+                    best_model_state = self.state_dict()
+                    torch.save(best_model_state, save_path)
+                    print(f"Saved best model with Validation Accuracy: {best_val_accuracy:.2f}%")
+
+        # Load best model at the end of training
+        if save_best_model and best_model_state is not None:
+            self.load_state_dict(best_model_state)
+            print(f"Loaded best model with Validation Accuracy: {best_val_accuracy:.2f}%")
+
 
     def custom_test(self, device, test_dataloader):
         predicted_cat = torch.tensor([], dtype=torch.long)
@@ -312,16 +352,15 @@ def main():
     #MODEL_PATH = "custom_vit_erica_colab_8eps.pth"  # full: [1100, 100]
     MODEL_PATH = "custom_vit_erica_colab_20eps.pth"  # full: [1100, 100], latest (@@ torch.__version__: 2.6.0+cu124)
 
-    raise Exception("!!!! ok")  # wip
+    #raise Exception("!!!! ok")
 
-    if 0:  # do training?
+    if 1:  # do training?
         optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-2)
         loss_fn = nn.CrossEntropyLoss()
 
         #epoch_n = 8
         epoch_n = 1  # !!!
 
-        model.train()
         model.custom_train(device, optimizer, loss_fn, epoch_n, train_dataloader,
                            val_dataloader=val_dataloader)
 

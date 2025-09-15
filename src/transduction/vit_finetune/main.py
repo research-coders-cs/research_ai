@@ -467,19 +467,27 @@ def main():
 
     model = get_finetuned(model_name, class_names_sorted)
 
+    """ **
+    The Trainer uses trainds (training dataset) and valds (validation dataset)
+    to compute training loss and evaluate metrics (e.g., accuracy) on the validation
+    set after each epoch, as specified by evaluation_strategy="epoch". This allows
+    us to monitor model performance on valds and use metric_for_best_model="accuracy"
+    to save the best model based on validation accuracy.
+    """
+
     trainer = get_trainer(
         model,
         TrainingArguments(
             f"output_trainer_finetune",  # @@
             save_strategy="epoch",
-            evaluation_strategy="epoch",
+            evaluation_strategy="epoch",  # **
             learning_rate=2e-5,
             per_device_train_batch_size=10,
             per_device_eval_batch_size=4,
             num_train_epochs=num_train_epochs,
             weight_decay=0.01,
-            load_best_model_at_end=True,
-            metric_for_best_model="accuracy",
+            load_best_model_at_end=True,  # **
+            metric_for_best_model="accuracy",  # **
             logging_dir='logs',
             remove_unused_columns=False,
             report_to="none",  # @@ https://discuss.huggingface.co/t/how-to-turn-wandb-off-in-trainer/6237/3
