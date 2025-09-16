@@ -136,7 +136,7 @@ class CustomViT(nn.Module):
 
             # Validation phase (if val_dataloader is provided)
             if val_dataloader is not None:
-                self.eval()  # Set model to evaluation mode
+                self.eval()  # Set model to evaluation mode; disable dropout and batch normalization updates.
                 val_loss = 0.0
                 correct = 0
                 total = 0
@@ -161,7 +161,7 @@ class CustomViT(nn.Module):
                     torch.save(best_model_state, save_path)
                     print(f"Saved best model with Validation Accuracy: {best_val_accuracy:.2f}% (to {save_path})")
 
-        # Load best model at the end of training
+        # Load best model at the end of training; mimicking `load_best_model_at_end=True`
         if save_best_val_model and best_model_state is not None:
             self.load_state_dict(best_model_state)
             print(f"Loaded best model with Validation Accuracy: {best_val_accuracy:.2f}%")
@@ -320,7 +320,7 @@ def main():
 
         cmds = CustomMriDataset(ds_paths['train'])
 
-        #train_dataset, val_dataset, test_dataset = cmds.random_split(dataset, [1000, 100, 100])  # colab
+        #train_dataset, val_dataset, test_dataset = cmds.random_split([1000, 100, 100])  # colab
         train_dataset, val_dataset, test_dataset, _ = cmds.random_split([80, 10, 10, len(cmds)-100])
 
         #print(train_dataset[0])  # ok
