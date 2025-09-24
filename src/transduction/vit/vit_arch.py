@@ -219,8 +219,8 @@ class CustomMnistDataset(Dataset):
 
 
 class CustomMriDataset(Dataset):
-    def __init__(self, ds_path, _ds=None):
-        transf = CustomMriDataset.get_transform()
+    def __init__(self, ds_path, _ds=None, ch=230, rh=80):
+        transf = CustomMriDataset.get_transform(ch, rh)
         self.transf = transf
         self.ds = _ds if _ds is not None else MriDataset(dataset=ds_path, transform=transf)
 
@@ -245,7 +245,7 @@ class CustomMriDataset(Dataset):
         return f'total={total} {hg}'
 
     @staticmethod
-    def get_transform():
+    def get_transform(ch, rh):
         processor = CustomViT.get_image_processor()
         #print('@@ processor:', processor)
 
@@ -256,7 +256,7 @@ class CustomMriDataset(Dataset):
         ])
 
         return lambda pil_img, idx_mri_left_right : transf_inner(
-            MriDataset.erica_crop_pil(pil_img, idx_mri_left_right))
+            MriDataset.erica_crop_pil(pil_img, idx_mri_left_right, ch=ch, rh=rh))
 
 
 def main():
@@ -318,7 +318,9 @@ def main():
 
         stat_ds_paths(ds_paths)
 
-        cmds = CustomMriDataset(ds_paths['train'])
+        #cmds = CustomMriDataset(ds_paths['train'], ch=230, rh=160)  # orig
+        #cmds = CustomMriDataset(ds_paths['train'], ch=230, rh=80)  # new
+        cmds = CustomMriDataset(ds_paths['train'], ch=250, rh=80)  # new, adjusted
 
         #train_dataset, val_dataset, test_dataset = cmds.random_split([1000, 100, 100])  # colab
         train_dataset, val_dataset, test_dataset, _ = cmds.random_split([80, 10, 10, len(cmds)-100])
