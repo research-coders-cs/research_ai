@@ -101,12 +101,18 @@ def imread_as_tensor_mri(plt, fpath):
         return torch.tensor([im[:,:,0]], dtype=torch.float32)  # extract R channel as tensor
 
 # This works also for RGB tensor input (e.g. torch.Size([3, 480, 640]))
-def crop_erica_tensor(et):
-    ch = 230
+def crop_erica_tensor(et, ch=230, rh=80):
     cw = 325
     r = 160
-    erica_crop_left =  et[:, ch-r:ch+r, cw-r:cw]  # torch.Size([1, r*2, r])
-    erica_crop_right = et[:, ch-r:ch+r, cw:cw+r]  # torch.Size([1, r*2, r])
+
+    #==== orig
+    # erica_crop_left =  et[:, ch-r:ch+r, cw-r:cw]  # torch.Size([1, r*2, r])
+    # erica_crop_right = et[:, ch-r:ch+r, cw:cw+r]  # torch.Size([1, r*2, r])
+    #==== flex heights (orig <-- ch=230, rh=160)
+    erica_crop_left =  et[:, ch-rh:ch+rh, cw-r:cw]  # torch.Size([1, rh*2, r])
+    erica_crop_right = et[:, ch-rh:ch+rh, cw:cw+r]  # torch.Size([1, rh*2, r])
+    #====
+
     #print('@@ erica_crop_left.shape:', erica_crop_left.shape)
     #print('@@ erica_crop_right.shape:', erica_crop_right.shape)
 
@@ -210,11 +216,16 @@ class MriDataset(Dataset):
         return transformed, class_index, extra
 
     @staticmethod
-    def erica_crop_pil(pil_img, idx_mri_left_right):
+    def erica_crop_pil(pil_img, idx_mri_left_right, ch=230, rh=80):
+        """
+        ch=230, rh=160 -> torch.Size([1, 320, 160]), torch.Size([1, 320, 160])
+        ch=230, rh=80  -> torch.Size([1, 160, 160]), torch.Size([1, 160, 160])
+        """
+
         im = transform_to_tensor(pil_img)
         #print(im.dtype, im.shape)  # torch.uint8 torch.Size([3, 480, 640])
 
-        im = crop_erica_tensor(im)  # (left, right)
+        im = crop_erica_tensor(im, ch=ch, rh=rh)
 
         if 0:  # debug
             plt_imshow_tensor(plt, im[0])  # left
