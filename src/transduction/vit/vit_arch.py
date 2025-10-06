@@ -220,9 +220,9 @@ class CustomMnistDataset(Dataset):
 
 class CustomMriDataset(Dataset):
     def __init__(self, ds_path, _ds=None, ch=230, rh=80):
-        transf = CustomMriDataset.get_transform(ch, rh)
-        self.transf = transf
-        self.ds = _ds if _ds is not None else MriDataset(dataset=ds_path, transform=transf)
+        self.ds = _ds if _ds is not None else MriDataset(
+            dataset=ds_path,
+            transform=CustomMriDataset.get_transform(ch, rh))
 
     def __len__(self):
         return len(self.ds)
