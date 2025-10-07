@@ -308,7 +308,7 @@ def random_split_li(li_in, li_lens):
 
     return sp1, sp2
 
-def random_split_ds_path(ds_path, li_lens):
+def _random_split_ds_path(ds_path, li_lens):
     if len(li_lens) != 2:
         raise ValueError('@@ Unsupported case: len(li_lens) != 2')
 
@@ -329,6 +329,17 @@ def random_split_ds_path(ds_path, li_lens):
         ds_path_2[label].append(path)
 
     return ds_path_1, ds_path_2
+
+def random_split_ds_path(ds_path, li_lens):
+    c_parts = len(li_lens)
+    if c_parts == 2:
+        return _random_split_ds_path(ds_path, li_lens)
+    elif c_parts == 3:
+        dsp_0, dsp_12 = _random_split_ds_path(ds_path, [li_lens[0], li_lens[1] + li_lens[2]])
+        dsp_1, dsp_2 = _random_split_ds_path(dsp_12, [li_lens[1], li_lens[2]])
+        return dsp_0, dsp_1, dsp_2
+    else:
+        raise ValueError('@@ Unsupported case: c_parts != 2 && c_parts != 3')
 #-------- $$
 
 
