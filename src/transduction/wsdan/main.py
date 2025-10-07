@@ -131,15 +131,16 @@ def main():
         ds_paths, class_names_sorted = get_mnist_ds_paths(  # mnist 10-class
             root_train='datasets_vit/pngs/train--sparse',  # 128 samples
             root_test='datasets_vit/pngs/test--sparse')  # 10 samples
-        #ds_paths, class_names_sorted = get_mri_ds_paths()  # erica 4-class !!!! TODO
+        #ds_paths, class_names_sorted = get_mri_ds_paths()  # erica 4-class !!!! TODO !!111
 
         stat_ds_paths(ds_paths)
 
-        ds_path_train, ds_path_validate = random_split_ds_path(
-            ds_paths['train'], li_percent=[80, 20])
+        ds_path_train, ds_path_validate = random_split_ds_path(ds_paths['train'], [110, 18])
         ds_path_test = ds_paths['test']
 
         ds_paths_adapted = { 'train': ds_path_train, 'validate': ds_path_validate }
+        stat_ds_paths(ds_paths_adapted)
+
         ##ckpt = demo_train(total_epochs, model, ds_paths_adapted)
 
         #ckpt = 'output--pc-wsdan-mnist-sparse/demo_train/resnet34_250_8_lr-1e5_n4'  # 2/10 poor
@@ -149,7 +150,7 @@ def main():
         print_scores_debug(results, class_names_sorted)
 
 
-#==== TOOO adapt
+#==== TOOO adapt !!111
     # y_true, y_pred = model.custom_test(device, test_dataloader)
     # get_confusion_matrix(y_true, y_pred, class_names_sorted)
 #==== debug

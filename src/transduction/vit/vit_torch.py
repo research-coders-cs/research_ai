@@ -292,14 +292,15 @@ def stat_ds_paths(ds_paths):
     print("@@ stat_ds_paths(): ---- $$")
 
 
-def random_split_li(li_in, li_sz):
+def random_split_li(li_in, li_lens):
+    if len(li_lens) != 2:
+        raise ValueError('@@ Unsupported case: len(li_lens) != 2')
+
     cp = li_in[:]
     random.shuffle(cp)  # in place
 
-    if len(li_sz) != 2:
-        raise ValueError('@@ Unsupported case: len(li_sz) != 2')
-    sz1 = li_sz[0]
-    sz2 = li_sz[1]
+    sz1 = li_lens[0]
+    sz2 = li_lens[1]
     sp1 = cp[:sz1]
     sp2 = cp[sz1:]
     if len(sp1) + len(sp2) != sz1 + sz2:
@@ -307,27 +308,27 @@ def random_split_li(li_in, li_sz):
 
     return sp1, sp2
 
-def random_split_ds_path(ds_path, li_percent):
-    if len(li_percent) != 2:
-        raise ValueError('@@ Unsupported case: len(li_percent) != 2')
-    elif sum(li_percent) != 100:
-        raise ValueError('@@ Unsupported case: sum(li_percent) != 100')
+def random_split_ds_path(ds_path, li_lens):
+    if len(li_lens) != 2:
+        raise ValueError('@@ Unsupported case: len(li_lens) != 2')
 
+    li_items = []
     ds_path_1 = {}
     ds_path_2 = {}
-    for label, li in ds_path.items():
-        sz = len(li)
-        sz_1 = int(sz * li_percent[0] / 100)
-        sz_2 = sz - sz_1
+    for label, li_paths in ds_path.items():
+        ds_path_1[label] = []
+        ds_path_2[label] = []
+        for path in li_paths:
+            li_items.append((label, path))
 
-        li_1, li_2 = random_split_li(li, [sz_1, sz_2])
-        #print(f'@@ [{label}] len(li_<train,validate>):', len(li_1), len(li_2))
-        ds_path_1[label] = li_1
-        ds_path_2[label] = li_2
+    li_items_1, li_items_2 = random_split_li(li_items, li_lens)
+
+    for label, path in li_items_1:
+        ds_path_1[label].append(path)
+    for label, path in li_items_2:
+        ds_path_2[label].append(path)
 
     return ds_path_1, ds_path_2
-
-
 #-------- $$
 
 
