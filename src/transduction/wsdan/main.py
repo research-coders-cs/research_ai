@@ -127,20 +127,35 @@ def main():
         total_epochs = 2
         model = 'resnet34'
 
+        #====
         #ds_paths, class_names_sorted = get_thyroid_ds_paths('100g', debug=False)
-        ds_paths, class_names_sorted = get_mnist_ds_paths(  # mnist 10-class
-            root_train='datasets_vit/pngs/train--sparse',  # 128 samples
-            root_test='datasets_vit/pngs/test--sparse')  # 10 samples
-        #ds_paths, class_names_sorted = get_mri_ds_paths()  # erica 4-class !!!! TODO !!111
+        #====
+        if 0:
+            # ds_paths, class_names_sorted = get_mnist_ds_paths(  # mnist 10-class
+            #     root_train='datasets_vit/pngs/train--sparse',  # 128 samples
+            #     root_test='datasets_vit/pngs/test--sparse')  # 10 samples
+            #
+            stat_ds_paths(ds_paths)
 
-        stat_ds_paths(ds_paths)
+            ds_path_train, ds_path_validate = random_split_ds_path(ds_paths['train'], [110, 18])
+            ds_path_test = ds_paths['test']
+        #====
+        if 1:
+            ds_paths, class_names_sorted = get_mri_ds_paths(
+                'erica', root='datasets_mri/50-001')  # colab --> 1200
+                #'erica', root='datasets_mri/50-001-100')  # debug --> 202
 
-        ds_path_train, ds_path_validate = random_split_ds_path(ds_paths['train'], [110, 18])
-        ds_path_test = ds_paths['test']
+            stat_ds_paths(ds_paths)
+
+            ds_path_train, ds_path_validate, ds_path_test = random_split_ds_path(
+                ds_paths['train'], [1000, 100, 100])  # colab <-- 1200
+                #ds_paths['train'], [140, 20, 42])  # debug <-- 202
+        #====
 
         ds_paths_adapted = { 'train': ds_path_train, 'validate': ds_path_validate }
         stat_ds_paths(ds_paths_adapted)
 
+        raise Exception("9999")
         ##ckpt = demo_train(total_epochs, model, ds_paths_adapted)
 
         #ckpt = 'output--pc-wsdan-mnist-sparse/demo_train/resnet34_250_8_lr-1e5_n4'  # 2/10 poor
