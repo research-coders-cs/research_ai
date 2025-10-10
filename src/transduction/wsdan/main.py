@@ -166,7 +166,9 @@ def main():
         #ckpt = 'output--pc-wsdan-mnist-sparse/demo_train/resnet34_250_8_lr-1e5_n4'  # 2/10 poor
         #ckpt = 'output--colab-wsdan-mnist/eps2/resnet34_250_8_lr-1e5_n4'  # eps=2, test 4/10 poor
         ckpt = 'output--colab-wsdan-mnist/eps8/resnet34_250_8_lr-1e5_n4'  # eps=8, test 7/10
-        results = demo_test(ckpt, model, ds_path_test)
+
+        #results = demo_test(ckpt, model, ds_path_test)
+        results = demo_test(ckpt, model, ds_path_test, mri_ch=250, mri_rh=80)
         print_scores_debug(results, class_names_sorted)
 
 

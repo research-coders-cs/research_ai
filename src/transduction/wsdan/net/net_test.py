@@ -13,7 +13,7 @@ from tqdm import tqdm
 def test(device, net, batch_size, data_loader, ckpt, savepath=None):
     logging.info('Network loading from {}'.format(ckpt))
 
-    ckpt_dict = torch.load(ckpt)
+    ckpt_dict = torch.load(ckpt, weights_only=False)
 
     print('@@ ckpt:', ckpt)
     for key, val in ckpt_dict.items():  # @@
