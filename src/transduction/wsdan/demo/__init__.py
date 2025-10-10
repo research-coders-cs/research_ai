@@ -64,7 +64,7 @@ def slice_split(li_in_const, slice_in):
     del li_out[slice_in]
     return li_out_sliced, li_out
 
-def create_train_loader(train_ds_path, target_resize, batch_size, workers, with_doppler=False):
+def create_train_loader(train_ds_path, target_resize, batch_size, workers, ch, rh, with_doppler=False):
     #----!!!!
     if 0:
         from ..net.doppler import get_to_doppler
@@ -76,6 +76,8 @@ def create_train_loader(train_ds_path, target_resize, batch_size, workers, with_
         phase='train',
         dataset=train_ds_path,
         transform=get_transform(target_resize, phase='basic'),
+        ch=ch,
+        rh=rh,
     #==== @@ orig
         with_alpha_channel=False  # if False, it will load image as RGB(3-channel)
     #==== @@ WIP w.r.t. 'digitake/preprocess/thyroid.py'
@@ -98,11 +100,13 @@ def create_train_loader(train_ds_path, target_resize, batch_size, workers, with_
 
     return train_loader
 
-def create_validate_loader(validate_ds_path, target_resize, batch_size, workers):
+def create_validate_loader(validate_ds_path, target_resize, batch_size, workers, ch, rh):
     validate_dataset = ThyroidDataset(
         phase='val',
         dataset=validate_ds_path,
         transform=get_transform(target_resize, phase='basic'),
+        ch=ch,
+        rh=rh,
         with_alpha_channel=False)
 
     return DataLoader(
@@ -187,7 +191,9 @@ def kfold_ds_paths_debug_v2():  # hardcoded w.r.t. 'Dataset_train_test_val.zip'
             for slice_v in (slice(0, 10), slice(10, 20), slice(20, 30))]
 
 
-def _train(with_doppler, total_epochs, model, ds_paths, savepath, config_doppler=None):
+def _train(with_doppler, total_epochs, model, ds_paths, savepath,
+           ch=None, rh=None,
+           config_doppler=None):
     device = get_device()
     print("@@ device:", device)
 
@@ -263,8 +269,8 @@ def _train(with_doppler, total_epochs, model, ds_paths, savepath, config_doppler
         #====
 
     kfold_loaders = [(
-        create_train_loader(tv_ds_path[0], target_resize, batch_size, workers, with_doppler),
-        create_validate_loader(tv_ds_path[1], target_resize, batch_size, workers))
+        create_train_loader(tv_ds_path[0], target_resize, batch_size, workers, ch, rh, with_doppler),
+        create_validate_loader(tv_ds_path[1], target_resize, batch_size, workers, ch, rh))
         for tv_ds_path in kfold_ds_paths]
 
     #
@@ -329,8 +335,10 @@ def _train(with_doppler, total_epochs, model, ds_paths, savepath, config_doppler
 def train(
         total_epochs=TOTAL_EPOCHS_DEFAULT,
         model=MODEL_DEFAULT,
-        ds_paths={'train': TRAIN_DS_PATH_DEFAULT, 'validate': VALIDATE_DS_PATH_DEFAULT}):
-    return _train(False, total_epochs, model, ds_paths, mk_artifact_dir('demo_train'))
+        ds_paths={'train': TRAIN_DS_PATH_DEFAULT, 'validate': VALIDATE_DS_PATH_DEFAULT},
+        mri_ch=230, mri_rh=80):
+    return _train(False, total_epochs, model, ds_paths, mk_artifact_dir('demo_train'),
+                  ch=mri_ch, rh=mri_rh)
 
 
 def train_with_doppler(
@@ -348,7 +356,8 @@ def train_with_doppler(
 
 
 def test(ckpt, model=MODEL_DEFAULT, ds_path=TEST_DS_PATH_DEFAULT,
-        target_resize=250, batch_size=8, num_attention_maps=32, auc=False, tag=''):
+        target_resize=250, batch_size=8, num_attention_maps=32, auc=False, tag='',
+        mri_ch=230, mri_rh=80):
     from .utils import show_data_loader
     from .stats import print_scores, print_auc, print_poa
 
@@ -365,6 +374,8 @@ def test(ckpt, model=MODEL_DEFAULT, ds_path=TEST_DS_PATH_DEFAULT,
         phase='test',
         dataset=ds_path,
         transform=get_transform(target_resize, phase='basic'),
+        ch=mri_ch,
+        rh=mri_rh,
         with_alpha_channel=False)
 
     #@@workers = 2

@@ -1,5 +1,5 @@
 from ..vit.vit_torch import stat_ds_paths, random_split_ds_path, build_dataset, \
-    get_mnist_ds_paths, get_thyroid_ds_paths, get_mri_ds_paths
+    get_mnist_ds_paths, get_thyroid_ds_paths, get_mri_ds_paths, MriDataset
 
 #---- ^^
 from PIL import Image
@@ -11,7 +11,8 @@ class ThyroidDataset(Dataset):
     Dataset for Thyroid Image
     """
 
-    def __init__(self, phase, dataset, transform, mask_dict=None, with_alpha_channel=True):
+    def __init__(self, phase, dataset, transform,
+                 mask_dict=None, with_alpha_channel=True, ch=None, rh=None):
         """
 
         :param phase: Train/Validation/Test phase
@@ -30,6 +31,10 @@ class ThyroidDataset(Dataset):
         self.mask_dict = mask_dict if mask_dict is not None and type(mask_dict) == dict else {}
         self.extra_channel_default = None
         self.with_alpha_channel = with_alpha_channel
+        self.ch = ch
+        self.rh = rh
+
+        print('@@ ThyroidDataset.__init__(): phase, ch, rh:', phase, ch, rh)
 
     def set_dataset(self, dataset):
         self.dataset = dataset
@@ -70,9 +75,6 @@ class ThyroidDataset(Dataset):
             'inclass_index': index
         }
 
-        # load and transform
-        image = Image.open(path).convert('RGB')
-
         try:
             extracted_filename = path.split('/')[-1]  # extract the filename of image to find its counterpart
             mask_path = next(p for p in self.mask_dict[label] if extracted_filename in p)
@@ -95,8 +97,12 @@ class ThyroidDataset(Dataset):
                 r, g, b = image.split()
                 image = Image.merge('RGBA', (r, g, b, gray_image))
         else:
-            # load and transform
-            image = Image.open(path).convert('RGB')
+            if path.endswith('?erica=l'):
+                image = MriDataset.erica_crop_pil(Image.open(path.replace('?erica=l', '')).convert('RGB'), 0, ch=self.ch, rh=self.rh)
+            elif path.endswith('?erica=r'):
+                image = MriDataset.erica_crop_pil(Image.open(path.replace('?erica=r', '')).convert('RGB'), 1, ch=self.ch, rh=self.rh)
+            else:
+                image = Image.open(path).convert('RGB')
 
         transformed_image = self.transform(image)
 

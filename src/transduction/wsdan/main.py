@@ -129,6 +129,7 @@ def main():
 
         #====
         #ds_paths, class_names_sorted = get_thyroid_ds_paths('100g', debug=False)
+        #ckpt = demo_train(total_epochs, model, ds_paths)
         #====
         if 0:
             # ds_paths, class_names_sorted = get_mnist_ds_paths(  # mnist 10-class
@@ -139,6 +140,11 @@ def main():
 
             ds_path_train, ds_path_validate = random_split_ds_path(ds_paths['train'], [110, 18])
             ds_path_test = ds_paths['test']
+
+            ds_paths_adapted = { 'train': ds_path_train, 'validate': ds_path_validate }
+            stat_ds_paths(ds_paths_adapted)
+
+            ckpt = demo_train(total_epochs, model, ds_paths_adapted)
         #====
         if 1:
             ds_paths, class_names_sorted = get_mri_ds_paths(
@@ -150,13 +156,12 @@ def main():
             ds_path_train, ds_path_validate, ds_path_test = random_split_ds_path(
                 ds_paths['train'], [1000, 100, 100])  # colab <-- 1200
                 #ds_paths['train'], [140, 20, 42])  # debug <-- 202
+
+            ds_paths_adapted = { 'train': ds_path_train, 'validate': ds_path_validate }
+            stat_ds_paths(ds_paths_adapted)
+
+            ckpt = demo_train(total_epochs, model, ds_paths_adapted, mri_ch=250, mri_rh=80)
         #====
-
-        ds_paths_adapted = { 'train': ds_path_train, 'validate': ds_path_validate }
-        stat_ds_paths(ds_paths_adapted)
-
-        raise Exception("9999")
-        ##ckpt = demo_train(total_epochs, model, ds_paths_adapted)
 
         #ckpt = 'output--pc-wsdan-mnist-sparse/demo_train/resnet34_250_8_lr-1e5_n4'  # 2/10 poor
         #ckpt = 'output--colab-wsdan-mnist/eps2/resnet34_250_8_lr-1e5_n4'  # eps=2, test 4/10 poor
