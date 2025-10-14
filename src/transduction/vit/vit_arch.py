@@ -159,7 +159,7 @@ class CustomViT(nn.Module):
                     best_val_accuracy = val_accuracy
                     best_model_state = self.state_dict()
                     torch.save(best_model_state, save_path)
-                    print(f"Saved best model with Validation Accuracy: {best_val_accuracy:.2f}% (to {save_path})")
+                    print(f"🔥 Saved best model with Validation Accuracy: {best_val_accuracy:.2f}% (to {save_path})")
 
         # Load best model at the end of training; mimicking `load_best_model_at_end=True`
         if save_best_val_model and best_model_state is not None:
