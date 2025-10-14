@@ -2,8 +2,8 @@ from .demo import test as demo_test
 from .demo import train as demo_train
 from .demo import train_with_doppler as demo_train_with_doppler
 from .shim import stat_ds_paths, random_split_ds_path, build_dataset, \
-    get_mnist_ds_paths, get_thyroid_ds_paths, get_mri_ds_paths
-
+    get_mnist_ds_paths, get_thyroid_ds_paths, get_mri_ds_paths, \
+    get_scores, get_confusion_matrix
 
 import logging
 logger = logging.getLogger('@@')
@@ -131,11 +131,11 @@ def main():
         #ds_paths, class_names_sorted = get_thyroid_ds_paths('100g', debug=False)
         #ckpt = demo_train(total_epochs, model, ds_paths)
         #====
-        if 0:
-            # ds_paths, class_names_sorted = get_mnist_ds_paths(  # mnist 10-class
-            #     root_train='datasets_vit/pngs/train--sparse',  # 128 samples
-            #     root_test='datasets_vit/pngs/test--sparse')  # 10 samples
-            #
+        if 1:
+            ds_paths, class_names_sorted = get_mnist_ds_paths(  # mnist 10-class
+                root_train='datasets_vit/pngs/train--sparse',  # 128 samples
+                root_test='datasets_vit/pngs/test--sparse')  # 10 samples
+
             stat_ds_paths(ds_paths)
 
             ds_path_train, ds_path_validate = random_split_ds_path(ds_paths['train'], [110, 18])
@@ -144,9 +144,16 @@ def main():
             ds_paths_adapted = { 'train': ds_path_train, 'validate': ds_path_validate }
             stat_ds_paths(ds_paths_adapted)
 
-            ckpt = demo_train(total_epochs, model, ds_paths_adapted)
+            if 0:  # !!
+                ckpt = demo_train(total_epochs, model, ds_paths_adapted)
+
+            #ckpt = 'output--pc-wsdan-mnist-sparse/demo_train/resnet34_250_8_lr-1e5_n4'  # 2/10 poor
+            #ckpt = 'output--colab-wsdan-mnist/eps2/resnet34_250_8_lr-1e5_n4'  # eps=2, test 4/10 poor
+            ckpt = 'output--colab-wsdan-mnist/eps8/resnet34_250_8_lr-1e5_n4'  # eps=8, test 7/10
+
+            results = demo_test(ckpt, model, ds_path_test)
         #====
-        if 1:
+        if 0:
             ds_paths, class_names_sorted = get_mri_ds_paths(
                 'erica', root='datasets_mri/50-001')  # colab --> 1200
                 #'erica', root='datasets_mri/50-001-100')  # debug --> 202
@@ -160,47 +167,14 @@ def main():
             ds_paths_adapted = { 'train': ds_path_train, 'validate': ds_path_validate }
             stat_ds_paths(ds_paths_adapted)
 
-            ckpt = demo_train(total_epochs, model, ds_paths_adapted, mri_ch=250, mri_rh=80)
+            if 1:  # !!
+                ckpt = demo_train(total_epochs, model, ds_paths_adapted, mri_ch=250, mri_rh=80)
+
+            results = demo_test(ckpt, model, ds_path_test, mri_ch=250, mri_rh=80)
         #====
 
-        #ckpt = 'output--pc-wsdan-mnist-sparse/demo_train/resnet34_250_8_lr-1e5_n4'  # 2/10 poor
-        #ckpt = 'output--colab-wsdan-mnist/eps2/resnet34_250_8_lr-1e5_n4'  # eps=2, test 4/10 poor
-        ckpt = 'output--colab-wsdan-mnist/eps8/resnet34_250_8_lr-1e5_n4'  # eps=8, test 7/10
-
-        #results = demo_test(ckpt, model, ds_path_test)
-        results = demo_test(ckpt, model, ds_path_test, mri_ch=250, mri_rh=80)
-        print_scores_debug(results, class_names_sorted)
-
-
-#==== TOOO adapt !!111
-    # y_true, y_pred = model.custom_test(device, test_dataloader)
-    # get_confusion_matrix(y_true, y_pred, class_names_sorted)
-#==== debug
-import torch
-import numpy as np
-from .demo.stats import softmax
-def print_scores_debug(results, class_names_sorted):
-    pred = results[2]
-    true = results[3]
-    # print(pred, true)  # !!!!
-    # print(class_names_sorted)  # !!!!
-    _score = 0
-
-    with np.printoptions(formatter={'float': '{:.2e}'.format}):
-        for (i, (y_hat,y)) in enumerate(zip(pred,true)):
-            _pred = torch.argmax(y_hat)
-            _pred_name = class_names_sorted[int(_pred)]
-            _true = y
-            _true_name = class_names_sorted[int(_true)]
-            check = '✅' if _pred == _true else '❌'
-
-            if _pred == _true:
-                _score += 1
-
-            print("Case {}--{} {} (Pred={}, True={})".format(
-                i + 1, softmax(y_hat.cpu().numpy()), check, _pred_name, _true_name))
-
-    print(f'@@ Accuracy: (# of ✅) / (# of Cases) = {_score} / {len(pred)} = %0.3f' % (_score / len(pred)))
+        y_true, y_pred = get_scores(results, class_names_sorted, debug=True)
+        get_confusion_matrix(y_true, y_pred, class_names_sorted)
 
 
 if __name__ == '__main__':
