@@ -378,7 +378,7 @@ def main():
         print(f"Model saved to {MODEL_PATH}")
     else:
         try:
-            model.load_state_dict(torch.load(MODEL_PATH, map_location=torch.device(device_str)))
+            model.load_state_dict(torch.load(MODEL_PATH, map_location=torch.device(device_str), weights_only=False))
             print(f"Model loaded from {MODEL_PATH}")
         except FileNotFoundError:
             print(f"Error: No saved model found at {MODEL_PATH}. Please train first.")

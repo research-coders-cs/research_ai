@@ -428,7 +428,7 @@ def _save_ckpt(model, ckpt):
 
 
 def _load_ckpt(model, ckpt):
-    ckpt_state_dict = torch.load(ckpt)['state_dict']
+    ckpt_state_dict = torch.load(ckpt, weights_only=False)['state_dict']
 
     model_dict = model.state_dict()
     pretrained_dict = {k: v for k, v in ckpt_state_dict.items()
