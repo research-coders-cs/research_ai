@@ -131,7 +131,7 @@ def main():
         #ds_paths, class_names_sorted = get_thyroid_ds_paths('100g', debug=False)
         #ckpt = demo_train(total_epochs, model, ds_paths)
         #====
-        if 1:
+        if 0:
             ds_paths, class_names_sorted = get_mnist_ds_paths(  # mnist 10-class
                 root_train='datasets_vit/pngs/train--sparse',  # 128 samples
                 root_test='datasets_vit/pngs/test--sparse')  # 10 samples
@@ -153,22 +153,24 @@ def main():
 
             results = demo_test(ckpt, model, ds_path_test)
         #====
-        if 0:
+        if 1:
             ds_paths, class_names_sorted = get_mri_ds_paths(
-                'erica', root='datasets_mri/50-001')  # colab --> 1200
-                #'erica', root='datasets_mri/50-001-100')  # debug --> 202
+                #'erica', root='datasets_mri/50-001')  # colab --> 1200
+                'erica', root='datasets_mri/50-001-100')  # debug --> 202
 
             stat_ds_paths(ds_paths)
 
             ds_path_train, ds_path_validate, ds_path_test = random_split_ds_path(
-                ds_paths['train'], [1000, 100, 100])  # colab <-- 1200
-                #ds_paths['train'], [140, 20, 42])  # debug <-- 202
+                #ds_paths['train'], [1000, 100, 100])  # colab <-- 1200
+                ds_paths['train'], [140, 20, 42])  # debug <-- 202
 
             ds_paths_adapted = { 'train': ds_path_train, 'validate': ds_path_validate }
             stat_ds_paths(ds_paths_adapted)
 
-            if 1:  # !!
+            if 0:  # !!
                 ckpt = demo_train(total_epochs, model, ds_paths_adapted, mri_ch=250, mri_rh=80)
+            else:
+                ckpt = 'wsdan_erica_colab_20eps--resnet34_250_8_lr-1e5_n4.pth'
 
             results = demo_test(ckpt, model, ds_path_test, mri_ch=250, mri_rh=80)
         #====

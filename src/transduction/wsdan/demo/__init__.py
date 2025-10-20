@@ -394,7 +394,7 @@ def test(ckpt, model=MODEL_DEFAULT, ds_path=TEST_DS_PATH_DEFAULT,
     net = WSDAN(num_classes=len(ds_path), M=num_attention_maps, model=model, pretrained=True)
     net.to(device)
 
-    sp = mk_artifact_dir(f'demo_thyroid_test_{tag}')
+    sp = mk_artifact_dir(f'demo_test_{tag}')
     results = net_test.test(device, net, batch_size, test_loader, ckpt, savepath=sp)
     # print('@@ results:', results)
 
