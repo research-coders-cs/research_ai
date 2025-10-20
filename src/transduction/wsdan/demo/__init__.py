@@ -356,14 +356,13 @@ def train_with_doppler(
 
 
 def test(ckpt, model=MODEL_DEFAULT, ds_path=TEST_DS_PATH_DEFAULT,
-        target_resize=250, batch_size=8, num_attention_maps=32, auc=False, tag='',
+        target_resize=250, num_attention_maps=32, auc=False, tag='',
         mri_ch=230, mri_rh=80):
     from .utils import show_data_loader
     from .stats import print_scores, print_auc, print_poa
 
     print("@@ model:", model)
     print("@@ target_resize:", target_resize)
-    print("@@ batch_size:", batch_size)
 
     device = get_device()
     print("@@ device:", device)
@@ -378,13 +377,15 @@ def test(ckpt, model=MODEL_DEFAULT, ds_path=TEST_DS_PATH_DEFAULT,
         rh=mri_rh,
         with_alpha_channel=False)
 
+    batch_size = len(test_dataset)  # @@
+
     #@@workers = 2
     workers = 0  # @@
     print('@@ workers:', workers)
 
     test_loader = DataLoader(
         test_dataset,
-        batch_size=len(test_dataset),  # @@
+        batch_size,  # @@
         shuffle=False,
         num_workers=workers,
         pin_memory=True)
@@ -395,7 +396,7 @@ def test(ckpt, model=MODEL_DEFAULT, ds_path=TEST_DS_PATH_DEFAULT,
     net.to(device)
 
     sp = mk_artifact_dir(f'demo_test_{tag}')
-    results = net_test.test(device, net, batch_size, test_loader, ckpt, savepath=sp)
+    results = net_test.test(device, net, test_loader, ckpt, savepath=sp)
     # print('@@ results:', results)
 
     if 0:  # OBSOLETE

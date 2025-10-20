@@ -4,13 +4,15 @@ from torch.nn import functional
 from .metric import TopKAccuracyMetric
 from .augment import batch_augment, get_raw_image, dump_heatmap
 
+from ..shim import get_scores
+
 import logging
 
 from tqdm import tqdm
 #from tqdm.notebook import tqdm
 
 
-def test(device, net, batch_size, data_loader, ckpt, savepath=None):
+def test(device, net, data_loader, ckpt, savepath=None):
     logging.info('Network loading from {}'.format(ckpt))
 
     ckpt_dict = torch.load(ckpt, weights_only=False)
@@ -40,6 +42,7 @@ def test(device, net, batch_size, data_loader, ckpt, savepath=None):
         pbar.set_description('Test data')
 
         for i, (X, y, p) in enumerate(data_loader):
+
             paths = p['path']  # @@
 
             # obtain data for testing
@@ -63,15 +66,23 @@ def test(device, net, batch_size, data_loader, ckpt, savepath=None):
             importance =  torch.abs(y_pred_raw[0] - y_pred_raw[1])
 
             y_pred = (y_pred_raw + (y_pred_crop * 2 * importance)) / 3.
-
+#wipppp w.r.t. verify_attentions()
             if savepath is not None:
                 raw_image = get_raw_image(X.cpu())
                 batches, _, imgH, imgW = X.size()
                 for idx in range(batches):
-                    dump_heatmap(savepath, '%06d' % (i * batch_size + idx),
+                    dump_heatmap(savepath, '%06d' % idx,
                                  raw_image, attention_maps[idx:idx + 1], imgH, imgW, idx)
 
-            results = (X, crop_image, y_pred, y, p)
+            # @@ assume (data_loader's batch_size) == len(test_dataset)
+            if i != 0:
+                raise ValueError(f'@@ batch_size != len(test_dataset)')
+            else:
+                results_i_0 = (X, crop_image, y_pred, y, p)
+
+            class_names_sorted = ['E0', 'E1', 'E2', 'E3']  # !!!!
+            y_true_proc, y_pred_proc = get_scores(results_i_0, class_names_sorted)  # !!!!
+            print(y_true_proc, y_pred_proc)  # !!!!
 
             # Top K
             epoch_raw_acc = raw_accuracy(y_pred_raw, y)
@@ -86,4 +97,4 @@ def test(device, net, batch_size, data_loader, ckpt, savepath=None):
 
         pbar.close()
 
-    return results
+    return results_i_0
