@@ -1,10 +1,11 @@
 import torch
 from torch.nn import functional
+import numpy as np
 
 from .metric import TopKAccuracyMetric
 from .augment import batch_augment, get_raw_image, dump_heatmap
 
-from ..shim import get_scores
+from ..shim import get_scores, plot_attention
 
 import logging
 
@@ -33,7 +34,6 @@ def test(device, net, data_loader, ckpt, savepath=None):
     ref_accuracy = TopKAccuracyMetric()
     raw_accuracy.reset()
 
-    results = []
     net.eval()
 
     with torch.no_grad():
@@ -66,14 +66,8 @@ def test(device, net, data_loader, ckpt, savepath=None):
             importance =  torch.abs(y_pred_raw[0] - y_pred_raw[1])
 
             y_pred = (y_pred_raw + (y_pred_crop * 2 * importance)) / 3.
-#wipppp w.r.t. verify_attentions()
-            if savepath is not None:
-                raw_image = get_raw_image(X.cpu())
-                batches, _, imgH, imgW = X.size()
-                for idx in range(batches):
-                    dump_heatmap(savepath, '%06d' % idx,
-                                 raw_image, attention_maps[idx:idx + 1], imgH, imgW, idx)
 
+            #-------- ^^
             # @@ assume (data_loader's batch_size) == len(test_dataset)
             if i != 0:
                 raise ValueError(f'@@ batch_size != len(test_dataset)')
@@ -81,8 +75,47 @@ def test(device, net, data_loader, ckpt, savepath=None):
                 results_i_0 = (X, crop_image, y_pred, y, p)
 
             class_names_sorted = ['E0', 'E1', 'E2', 'E3']  # !!!!
-            y_true_proc, y_pred_proc = get_scores(results_i_0, class_names_sorted)  # !!!!
-            print(y_true_proc, y_pred_proc)  # !!!!
+            y_true_scores, y_pred_scores = get_scores(results_i_0, class_names_sorted)
+
+            if savepath is not None:
+                raw_image = get_raw_image(X.cpu())
+                batches, _, imgH, imgW = X.size()
+                for idx in range(batches):
+
+                    input_path = paths[idx]
+
+                    ytrue, ypred = y_true_scores[idx], y_pred_scores[idx]
+                    result = ytrue == ypred
+
+                    ckpt_file = '999'  # !!!!
+
+                    #---- erica images
+                    # TODO             im_erica_l, im_erica_r = MriDataset.erica_crop_im(im_input)
+                    im_erica_l = raw_image[idx].permute(1, 2, 0).numpy()  # !!!! dummy
+                    im_erica_r = raw_image[idx].permute(1, 2, 0).numpy()  # !!!! dummy
+                    # TODO crop window overlay?
+
+                    #---- crop image
+                    im_crop = crop_image[idx].permute(1, 2, 0).numpy()
+                    array_min = im_crop.min()
+                    array_max = im_crop.max()
+                    normalized_array = (im_crop - array_min) / (array_max - array_min)  # Normalize to [0, 1] first
+                    im_crop_u8 = (normalized_array * 255).astype(np.uint8)  # Scale to [0, 255] and convert to uint8
+
+                    #---- heatmap image
+                    im_heatmap = dump_heatmap(
+                        savepath, '%06d' % idx,
+                        raw_image, attention_maps[idx:idx + 1], imgH, imgW, idx)
+
+
+                    title = (f'testds[{idx}] (erica_[l,r]) | crop | attention\n'
+                             f'(path: {input_path})\n'
+                             f'(ytrue: {ytrue} ypred: {ypred} inference result: {result})\n'
+                             f'(ViT model: {ckpt_file})')
+                    plot_attention([im_erica_l, im_erica_r, im_crop_u8, im_heatmap], title,
+                        f'{savepath}/info_testds_{idx}_result_{result}.png')
+
+            #-------- $$
 
             # Top K
             epoch_raw_acc = raw_accuracy(y_pred_raw, y)

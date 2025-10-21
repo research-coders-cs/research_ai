@@ -41,8 +41,11 @@ def dump_heatmap(savepath, prefix, raw_image, atten_map, imgH, imgW, batch_index
     #print('!!!! heat_attention_map.shape:', heat_attention_map.shape)  # torch.Size([1, 3, 224, 224])
 
     heat_attention_image = (raw_image * 0.3) + (heat_attention_map.cpu() * 0.7)
-    himg = ToPILImage(heat_attention_image[batch_index])
+    _himg = heat_attention_image[batch_index]
+    himg = ToPILImage(_himg)
     himg.save(os.path.join(savepath, f'{prefix}_heat_atten.png'))
+
+    return _himg.permute(1, 2, 0).numpy()
 
 def NormalizeData(data):
     return (data - np.min(data)) / (np.max(data) - np.min(data))
