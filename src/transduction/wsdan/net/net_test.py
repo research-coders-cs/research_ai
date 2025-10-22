@@ -5,7 +5,8 @@ import numpy as np
 from .metric import TopKAccuracyMetric
 from .augment import batch_augment, get_raw_image, dump_heatmap
 
-from ..shim import get_scores, plot_attention
+from ..shim import get_scores, plot_attention, MriDataset, get_plt
+plt = get_plt()
 
 import logging
 
@@ -74,26 +75,31 @@ def test(device, net, data_loader, ckpt, savepath=None):
             else:
                 results_i_0 = (X, crop_image, y_pred, y, p)
 
-            class_names_sorted = ['E0', 'E1', 'E2', 'E3']  # !!!!
-            y_true_scores, y_pred_scores = get_scores(results_i_0, class_names_sorted)
-
             if savepath is not None:
                 raw_image = get_raw_image(X.cpu())
                 batches, _, imgH, imgW = X.size()
-                for idx in range(batches):
 
+                # TODO refactor into API
+                ckpt_file = 'N/A'  # !!!!
+                class_names_sorted = ['E0', 'E1', 'E2', 'E3']  # !!!!
+                y_true_scores, y_pred_scores = get_scores(results_i_0, class_names_sorted)
+                mri_ch = 250  # !!!!
+                mri_rh = 80  # !!!!
+
+                for idx in range(batches):
                     input_path = paths[idx]
+                    erica_mode = 'erica=' in input_path
 
                     ytrue, ypred = y_true_scores[idx], y_pred_scores[idx]
                     result = ytrue == ypred
 
-                    ckpt_file = '999'  # !!!!
-
-                    #---- erica images
-                    # TODO             im_erica_l, im_erica_r = MriDataset.erica_crop_im(im_input)
-                    im_erica_l = raw_image[idx].permute(1, 2, 0).numpy()  # !!!! dummy
-                    im_erica_r = raw_image[idx].permute(1, 2, 0).numpy()  # !!!! dummy
-                    # TODO crop window overlay?
+                    #---- input images
+                    if erica_mode:
+                        im_input = plt.imread(input_path.split('?')[0])  # ndarray
+                        im_erica_l, im_erica_r = MriDataset.erica_crop_im(im_input, ch=mri_ch, rh=mri_rh)
+                    else:
+                        im_orig = raw_image[idx].permute(1, 2, 0).numpy()
+                    li_input = [im_erica_l, im_erica_r] if erica_mode else [im_orig]
 
                     #---- crop image
                     im_crop = crop_image[idx].permute(1, 2, 0).numpy()
@@ -108,11 +114,11 @@ def test(device, net, data_loader, ckpt, savepath=None):
                         raw_image, attention_maps[idx:idx + 1], imgH, imgW, idx)
 
 
-                    title = (f'testds[{idx}] (erica_[l,r]) | crop | attention\n'
+                    title = (f'testds[{idx}]: input | crop | attention\n'
                              f'(path: {input_path})\n'
                              f'(ytrue: {ytrue} ypred: {ypred} inference result: {result})\n'
-                             f'(ViT model: {ckpt_file})')
-                    plot_attention([im_erica_l, im_erica_r, im_crop_u8, im_heatmap], title,
+                             f'(model: {ckpt_file})')
+                    plot_attention(li_input + [im_crop_u8, im_heatmap], title,
                         f'{savepath}/info_testds_{idx}_result_{result}.png')
 
             #-------- $$

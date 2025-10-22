@@ -1,7 +1,8 @@
 from ..vit.vit_torch import stat_ds_paths, random_split_ds_path, build_dataset, \
     get_mnist_ds_paths, get_thyroid_ds_paths, get_mri_ds_paths, MriDataset
 from ..vit_finetune.attention import plot_attention
-from ..plot_if import get_confusion_matrix
+from ..plot_if import get_confusion_matrix, \
+    get_plt  # export
 
 #---- ^^
 from PIL import Image

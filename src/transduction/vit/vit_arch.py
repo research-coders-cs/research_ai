@@ -410,7 +410,8 @@ def main():
 
         verify_attentions(model, test_dataloader_bs1, verify_sample_size,
                           y_true=y_true, y_pred=y_pred,
-                          ckpt_file=MODEL_PATH, save_dir=attn_dir)
+                          ckpt_file=MODEL_PATH, save_dir=attn_dir,
+                          mri_ch=250, mri_rh=80)
 
     if 0:  # attention processing debug
         with torch.no_grad():
