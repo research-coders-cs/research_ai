@@ -396,7 +396,8 @@ def test(ckpt, model=MODEL_DEFAULT, ds_path=TEST_DS_PATH_DEFAULT,
     net.to(device)
 
     sp = mk_artifact_dir(f'demo_test_{tag}')
-    results = net_test.test(device, net, test_loader, ckpt, savepath=sp)
+    results = net_test.test(device, net, test_loader, ckpt, savepath=sp,
+                            ch=mri_ch, rh=mri_rh)
     # print('@@ results:', results)
 
     if 0:  # OBSOLETE

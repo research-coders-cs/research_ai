@@ -14,7 +14,8 @@ from tqdm import tqdm
 #from tqdm.notebook import tqdm
 
 
-def test(device, net, data_loader, ckpt, savepath=None):
+def test(device, net, data_loader, ckpt, savepath=None,
+         ch=None, rh=None):
     logging.info('Network loading from {}'.format(ckpt))
 
     ckpt_dict = torch.load(ckpt, weights_only=False)
@@ -82,9 +83,8 @@ def test(device, net, data_loader, ckpt, savepath=None):
                 # TODO refactor into API
                 ckpt_file = 'N/A'  # !!!!
                 class_names_sorted = ['E0', 'E1', 'E2', 'E3']  # !!!!
+
                 y_true_scores, y_pred_scores = get_scores(results_i_0, class_names_sorted)
-                mri_ch = 250  # !!!!
-                mri_rh = 80  # !!!!
 
                 for idx in range(batches):
                     input_path = paths[idx]
@@ -96,7 +96,7 @@ def test(device, net, data_loader, ckpt, savepath=None):
                     #---- input images
                     if erica_mode:
                         im_input = plt.imread(input_path.split('?')[0])  # ndarray
-                        im_erica_l, im_erica_r = MriDataset.erica_crop_im(im_input, ch=mri_ch, rh=mri_rh)
+                        im_erica_l, im_erica_r = MriDataset.erica_crop_im(im_input, ch=ch, rh=rh)
                     else:
                         im_orig = raw_image[idx].permute(1, 2, 0).numpy()
                     li_input = [im_erica_l, im_erica_r] if erica_mode else [im_orig]
@@ -115,6 +115,7 @@ def test(device, net, data_loader, ckpt, savepath=None):
 
 
                     title = (f'testds[{idx}]: input | crop | attention\n'
+                             f'(ch: {ch} rh: {rh})\n'
                              f'(path: {input_path})\n'
                              f'(ytrue: {ytrue} ypred: {ypred} inference result: {result})\n'
                              f'(model: {ckpt_file})')
