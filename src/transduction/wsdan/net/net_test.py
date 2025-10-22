@@ -102,7 +102,8 @@ def test(device, net, data_loader, ckpt, savepath=None,
                     li_input = [im_erica_l, im_erica_r] if erica_mode else [im_orig]
 
                     #---- crop image
-                    im_crop = crop_image[idx].permute(1, 2, 0).cpu().numpy()
+                    crop_image_cpu = crop_image.cpu()
+                    im_crop = crop_image_cpu[idx].permute(1, 2, 0).numpy()
                     array_min = im_crop.min()
                     array_max = im_crop.max()
                     normalized_array = (im_crop - array_min) / (array_max - array_min)  # Normalize to [0, 1] first
