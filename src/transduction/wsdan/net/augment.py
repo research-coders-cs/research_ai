@@ -64,6 +64,7 @@ def batch_augment(images, paths, attention_map, savepath=None,
 
     if mode == 'crop':
         crop_images = []
+        crop_bboxes = []
         for idx in range(batches):
             atten_map = attention_map[idx:idx + 1]
             if savepath is not None:  # @@ debug
@@ -81,22 +82,20 @@ def batch_augment(images, paths, attention_map, savepath=None,
             width_max = min(int(nonzero_indices[:, 1].max().item() + padding_ratio * imgW), imgW)
 
             #-------- @@
-            logger.debug(f'[idx={idx}] crop: ({width_min}, {height_min}), ({width_max}, {height_max})')
+            #logger.debug(f'[idx={idx}] crop: ({width_min}, {height_min}), ({width_max}, {height_max})')
+            bbox_crop = [width_min, height_min, width_max, height_max]
 
             disable_doppler_crop = config_doppler.get('disable_doppler_crop', False)\
                 if config_doppler is not None else False
             if use_doppler and not disable_doppler_crop:
                 #logger.debug('doppler_crop is ON')
 
-                bbox_crop = np.array([
-                    width_min, height_min,
-                    width_max, height_max], dtype=np.float32)
                 train_img_copy = np.array(
                     img_gpu_to_cpu(images[idx])).astype(np.uint8).copy()
                 train_img_path = paths[idx]
 
                 sh, sw = resolve_hw_slices(
-                    bbox_crop, train_img_copy, train_img_path, idx, (imgH, imgW), savepath, config_doppler)
+                    np.array(bbox_crop, dtype=np.float32), train_img_copy, train_img_path, idx, (imgH, imgW), savepath, config_doppler)
             else:
                 #logger.debug('doppler_crop is OFF')
                 sh, sw = slice(height_min, height_max), slice(width_min, width_max)
@@ -106,10 +105,11 @@ def batch_augment(images, paths, attention_map, savepath=None,
                 #images[idx:idx + 1, :, height_min:height_max, width_min:width_max],
                 images[idx:idx + 1, :, sh, sw],  # @@
                 size=(imgH, imgW), mode='bilinear'))
+            crop_bboxes.append(bbox_crop)
 
         crop_images = torch.cat(crop_images, dim=0)
         logger.debug(f"crop_images.shape: {crop_images.shape}")
-        return crop_images
+        return crop_images, crop_bboxes
 
     elif mode == 'drop':
         drop_masks = []

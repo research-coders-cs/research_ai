@@ -59,12 +59,12 @@ def test(device, net, data_loader, ckpt, savepath=None,
             ##################################
             # Attention Cropping
             ##################################
-            crop_image = batch_augment(X, paths, attention_maps,
+            crop_images, crop_bboxes = batch_augment(X, paths, attention_maps,
                 savepath=None, use_doppler=False,
                 mode='crop', theta=0.85, padding_ratio=0.05)
 
             # crop images forward
-            y_pred_crop, _, _ = net(crop_image)
+            y_pred_crop, _, _ = net(crop_images)
             importance =  torch.abs(y_pred_raw[0] - y_pred_raw[1])
 
             y_pred = (y_pred_raw + (y_pred_crop * 2 * importance)) / 3.
@@ -74,7 +74,8 @@ def test(device, net, data_loader, ckpt, savepath=None,
             if i != 0:
                 raise ValueError(f'@@ batch_size != len(test_dataset)')
             else:
-                results_i_0 = (X, crop_image, y_pred, y, p)
+                print('@@ crop_bboxes:', crop_bboxes)
+                results_i_0 = (X, crop_images, y_pred, y, p)
 
             if savepath is not None:
                 raw_image = get_raw_image(X.cpu())
@@ -102,8 +103,8 @@ def test(device, net, data_loader, ckpt, savepath=None,
                     li_input = [im_erica_l, im_erica_r] if erica_mode else [im_orig]
 
                     #---- crop image
-                    crop_image_cpu = crop_image.cpu()
-                    im_crop = crop_image_cpu[idx].permute(1, 2, 0).numpy()
+                    crop_images_cpu = crop_images.cpu()
+                    im_crop = crop_images_cpu[idx].permute(1, 2, 0).numpy()
                     array_min = im_crop.min()
                     array_max = im_crop.max()
                     normalized_array = (im_crop - array_min) / (array_max - array_min)  # Normalize to [0, 1] first
@@ -123,6 +124,7 @@ def test(device, net, data_loader, ckpt, savepath=None,
                     plot_attention(li_input + [im_crop_u8, im_heatmap], title,
                         f'{savepath}/info_testds_{idx}_result_{result}.png')
 
+                    #raise ValueError('!!!! debug !!!!')
             #-------- $$
 
             # Top K
