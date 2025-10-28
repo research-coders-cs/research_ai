@@ -2,8 +2,7 @@ from .demo import test as demo_test
 from .demo import train as demo_train
 from .demo import train_with_doppler as demo_train_with_doppler
 from .shim import stat_ds_paths, random_split_ds_path, build_dataset, \
-    get_mnist_ds_paths, get_thyroid_ds_paths, get_mri_ds_paths, \
-    get_scores, get_confusion_matrix
+    get_mnist_ds_paths, get_thyroid_ds_paths, get_mri_ds_paths
 
 import logging
 logger = logging.getLogger('@@')
@@ -172,11 +171,8 @@ def main():
             else:
                 ckpt = 'wsdan_erica_colab_20eps--resnet34_250_8_lr-1e5_n4.pth'
 
-            results = demo_test(ckpt, model, ds_path_test, mri_ch=250, mri_rh=80)
+            demo_test(ckpt, class_names_sorted, model, ds_path_test, mri_ch=250, mri_rh=80)
         #====
-
-        y_true, y_pred = get_scores(results, class_names_sorted, debug=True)
-        get_confusion_matrix(y_true, y_pred, class_names_sorted)
 
 
 if __name__ == '__main__':

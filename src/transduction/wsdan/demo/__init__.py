@@ -355,7 +355,7 @@ def train_with_doppler(
                   config_doppler=config_doppler)
 
 
-def test(ckpt, model=MODEL_DEFAULT, ds_path=TEST_DS_PATH_DEFAULT,
+def test(ckpt, class_names_sorted, model=MODEL_DEFAULT, ds_path=TEST_DS_PATH_DEFAULT,
         target_resize=250, num_attention_maps=32, auc=False, tag='',
         mri_ch=230, mri_rh=80):
     from .utils import show_data_loader
@@ -396,7 +396,7 @@ def test(ckpt, model=MODEL_DEFAULT, ds_path=TEST_DS_PATH_DEFAULT,
     net.to(device)
 
     sp = mk_artifact_dir(f'demo_test_{tag}')
-    results = net_test.test(device, net, test_loader, ckpt, savepath=sp,
+    results = net_test.test(device, class_names_sorted, net, test_loader, ckpt, savepath=sp,
                             ch=mri_ch, rh=mri_rh)
     # print('@@ results:', results)
 
@@ -412,5 +412,3 @@ def test(ckpt, model=MODEL_DEFAULT, ds_path=TEST_DS_PATH_DEFAULT,
         _enable_plot = True  # !!
         print(f'\n\n@@ ======== print_auc(results, plot={_enable_plot}), plot_savepath="{sp}"')
         print_auc(results, len(test_dataset), plot=_enable_plot, plot_savepath=sp)
-
-    return results

@@ -1,8 +1,7 @@
 from ..vit.vit_torch import stat_ds_paths, random_split_ds_path, build_dataset, \
     get_mnist_ds_paths, get_thyroid_ds_paths, get_mri_ds_paths, MriDataset
 from ..vit_finetune.attention import plot_attention
-from ..plot_if import get_confusion_matrix, \
-    get_plt  # export
+from ..plot_if import get_confusion_matrix, get_plt
 
 #---- ^^
 from PIL import Image
@@ -115,44 +114,4 @@ class ThyroidDataset(Dataset):
     def get_class_label(self, class_index):
         assert class_index < len(self.partition), 'The class_index is beyond number of class available'
         return self.partition[class_index][0]
-#---- $$
-
-#---- ^^
-import torch
-import numpy as np
-from .demo.stats import softmax
-def get_scores(results, class_names_sorted, debug=False):
-    pred = results[2]
-    true = results[3]
-    # print(pred, true)  # !!
-    # print(class_names_sorted)  # !!
-    _score = 0
-
-    predicted_cat = torch.tensor([], dtype=torch.long)
-    labels_cat = torch.tensor([], dtype=torch.long)
-
-    with np.printoptions(formatter={'float': '{:.2e}'.format}):
-        for (i, (y_hat,y)) in enumerate(zip(pred,true)):
-            _pred = torch.argmax(y_hat)
-            _true = y
-
-            predicted_cat = torch.cat((predicted_cat, torch.tensor([int(_pred)])), dim=0)
-            labels_cat = torch.cat((labels_cat, torch.tensor([int(_true)])), dim=0)
-
-            if debug:
-                _pred_name = class_names_sorted[int(_pred)]
-                _true_name = class_names_sorted[int(_true)]
-                check = '✅' if _pred == _true else '❌'
-
-
-                if _pred == _true:
-                    _score += 1
-
-                print("Case {}--{} {} (Pred={}, True={})".format(
-                    i + 1, softmax(y_hat.cpu().numpy()), check, _pred_name, _true_name))
-
-    if debug:
-        print(f'@@ Accuracy: (# of ✅) / (# of Cases) = {_score} / {len(pred)} = %0.3f' % (_score / len(pred)))
-
-    return labels_cat, predicted_cat
 #---- $$
