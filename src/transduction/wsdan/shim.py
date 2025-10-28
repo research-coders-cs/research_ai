@@ -8,11 +8,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 
 
-class ThyroidDataset(Dataset):
-    """
-    Dataset for Thyroid Image
-    """
-
+class WsdanDataset(Dataset):
     def __init__(self, phase, dataset, transform,
                  mask_dict=None, with_alpha_channel=True, ch=None, rh=None):
         """
@@ -36,7 +32,7 @@ class ThyroidDataset(Dataset):
         self.ch = ch
         self.rh = rh
 
-        print('@@ ThyroidDataset.__init__(): phase, ch, rh:', phase, ch, rh)
+        print('@@ WsdanDataset.__init__(): phase, ch, rh:', phase, ch, rh)
 
     def set_dataset(self, dataset):
         self.dataset = dataset

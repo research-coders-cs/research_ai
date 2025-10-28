@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import DataLoader
 
-from ..shim import build_dataset, ThyroidDataset
+from ..shim import build_dataset, WsdanDataset
 from ..net import WSDAN, net_train, net_test
 
 from .transform import get_transform
@@ -72,7 +72,7 @@ def create_train_loader(train_ds_path, target_resize, batch_size, workers, ch, r
         #print('@@ dataset_doppler_root:', dataset_doppler_root)
     #----!!!!
 
-    train_dataset = ThyroidDataset(
+    train_dataset = WsdanDataset(
         phase='train',
         dataset=train_ds_path,
         transform=get_transform(target_resize, phase='basic'),
@@ -80,7 +80,7 @@ def create_train_loader(train_ds_path, target_resize, batch_size, workers, ch, r
         rh=rh,
     #==== @@ orig
         with_alpha_channel=False  # if False, it will load image as RGB(3-channel)
-    #==== @@ WIP w.r.t. 'digitake/preprocess/thyroid.py'
+    #==== @@
         # mask_dict=get_to_doppler(dataset_doppler_root) if with_doppler else None,  # !!!!
         # with_alpha_channel=with_doppler  # !!!! TODO debug with `True`
     #====
@@ -101,7 +101,7 @@ def create_train_loader(train_ds_path, target_resize, batch_size, workers, ch, r
     return train_loader
 
 def create_validate_loader(validate_ds_path, target_resize, batch_size, workers, ch, rh):
-    validate_dataset = ThyroidDataset(
+    validate_dataset = WsdanDataset(
         phase='val',
         dataset=validate_ds_path,
         transform=get_transform(target_resize, phase='basic'),
@@ -305,8 +305,7 @@ def _train(with_doppler, total_epochs, model, ds_paths, savepath,
     if 0:  # @@
         wandb.init(
             # Set the project where this run will be logged
-            # project=f"Wsdan_Thyroid_{total_epochs}epochs_RecheckRemove_Upsampling_v2",
-            project=f"Wsdan_Thyroid",
+            project=f"Wsdan_Module",
             # We pass a run name (otherwise it’ll be randomly assigned, like sunshine-lollypop-10)
             name=run_name,
             # Track hyperparameters and run metadata
@@ -369,7 +368,7 @@ def test(ckpt, class_names_sorted, model=MODEL_DEFAULT, ds_path=TEST_DS_PATH_DEF
 
     #print('@@ ds_path:', ds_path)
 
-    test_dataset = ThyroidDataset(
+    test_dataset = WsdanDataset(
         phase='test',
         dataset=ds_path,
         transform=get_transform(target_resize, phase='basic'),
