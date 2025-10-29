@@ -1,6 +1,7 @@
 import torch
 from torch.nn import functional
 import numpy as np
+import cv2
 
 from .metric import TopKAccuracyMetric
 from .augment import batch_augment, get_raw_image, dump_heatmap
@@ -67,8 +68,29 @@ def verify_crop_attention(
         if erica_mode:
             im_input = plt.imread(input_path.split('?')[0])  # ndarray
             im_erica_l, im_erica_r = MriDataset.erica_crop_im(im_input, ch=ch, rh=rh)
+
+            #---- crop bbox overlay
+            bbox = crop_bboxes[idx]
+            is_erica_left = 'erica=l' in input_path
+
+            im_orig_in = im_erica_l if is_erica_left else im_erica_r
+            scale_w = im_orig_in.shape[0] / imgW
+            scale_h = im_orig_in.shape[1] / imgH
+            im_orig_out = cv2.rectangle(
+                cv2.cvtColor((im_orig_in * 255.0).astype('uint8'), cv2.COLOR_RGB2BGR),
+                (int(bbox[0] * scale_w), int(bbox[1] * scale_h)),
+                (int(bbox[2] * scale_w), int(bbox[3] * scale_h)),
+                (255, 0, 0), 2)
+
+            if is_erica_left:
+                im_erica_l = im_orig_out
+            else:
+                im_erica_r = im_orig_out
         else:
             im_orig = raw_image[idx].permute(1, 2, 0).numpy()
+            #---- crop bbox overlay
+            # TODO
+
         li_input = [im_erica_l, im_erica_r] if erica_mode else [im_orig]
 
         #---- crop image
@@ -88,6 +110,7 @@ def verify_crop_attention(
         title = (f'testds[{idx}]: input | crop | attention\n'
                  f'(ch: {ch} rh: {rh})\n'
                  f'(path: {input_path})\n'
+                 f'(crop: {crop_bboxes[idx]})\n'
                  f'(ytrue: {ytrue} ypred: {ypred} inference result: {result})\n'
                  f'(model: {ckpt_file})')
         plot_attention(li_input + [im_crop_u8, im_heatmap], title,
@@ -154,7 +177,6 @@ def test(device, class_names_sorted, net, data_loader, ckpt, savepath=None,
             if i != 0:
                 raise ValueError(f'@@ batch_size != len(test_dataset)')
             else:
-                print('@@ crop_bboxes:', crop_bboxes)
                 results_i_0 = (X, crop_images, y_pred, y, p)  # legacy compat
 
             if savepath is not None:
