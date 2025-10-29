@@ -78,7 +78,7 @@ def _train(device, logs, train_loader, net, feature_center, optimizer, pbar,
         # Attention Cropping
         ##################################
         with torch.no_grad():
-            crop_images = batch_augment(X, paths, attention_map[:, :1, :, :],
+            crop_images, _ = batch_augment(X, paths, attention_map[:, :1, :, :],
                 savepath=savepath_batch,
                 use_doppler=with_doppler, config_doppler=config_doppler,
                 mode='crop', theta=(0.7, 0.95), padding_ratio=0.1)
@@ -197,7 +197,7 @@ def _validate(device, logs, validate_loader, net, pbar, savepath_epoch):
           ##################################
           # Object Localization and Refinement
           ##################################
-          crop_images = batch_augment(X, paths, attention_map,
+          crop_images, _ = batch_augment(X, paths, attention_map,
               savepath=savepath_batch, use_doppler=False,
               mode='crop', theta=(0.7, 0.95), padding_ratio=0.05)
           y_pred_crop, _, _ = net(crop_images)
