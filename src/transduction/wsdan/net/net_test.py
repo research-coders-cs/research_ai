@@ -108,11 +108,12 @@ def verify_crop_attention(
 
 
         title = (f'testds[{idx}]: input | crop | attention\n'
-                 f'(ch: {ch} rh: {rh})\n'
-                 f'(path: {input_path})\n'
-                 f'(crop: {crop_bboxes[idx]})\n'
-                 f'(ytrue: {ytrue} ypred: {ypred} inference result: {result})\n'
-                 f'(model: {ckpt_file})')
+                 f'--------\n'
+                 f'path: {input_path}\n'
+                 f'model: {ckpt_file}\n'
+                 f'ch: {ch} rh: {rh}\n'
+                 f'window: {imgW}x{imgH} crop: {crop_bboxes[idx]}\n'
+                 f'ytrue: {ytrue} ypred: {ypred} inference result: {result}')
         plot_attention(li_input + [im_crop_u8, im_heatmap], title,
             f'{savepath}/info_testds_{idx}_result_{result}.png')
 
