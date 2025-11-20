@@ -49,6 +49,15 @@ def get_scores(pred, true, class_names_sorted, debug=False):
     return labels_cat, predicted_cat
 
 
+def overlay_bbox(im_in, bbox, imgW, imgH):
+    scale_w = im_in.shape[0] / imgW
+    scale_h = im_in.shape[1] / imgH
+    return cv2.rectangle(
+        cv2.cvtColor((im_in * 255.0).astype('uint8'), cv2.COLOR_RGB2BGR),
+        (int(bbox[0] * scale_w), int(bbox[1] * scale_h)),
+        (int(bbox[2] * scale_w), int(bbox[3] * scale_h)),
+        (255, 0, 0), 2)
+
 def verify_crop_attention(
     paths, ch, rh, savepath, ckpt_file,
     X, crop_images, crop_bboxes, attention_maps,
@@ -65,33 +74,23 @@ def verify_crop_attention(
         result = ytrue == ypred
 
         #---- input images
+        bbox = crop_bboxes[idx]
         if erica_mode:
             im_input = plt.imread(input_path.split('?')[0])  # ndarray
             im_erica_l, im_erica_r = MriDataset.erica_crop_im(im_input, ch=ch, rh=rh)
-
-            #---- crop bbox overlay
-            bbox = crop_bboxes[idx]
             is_erica_left = 'erica=l' in input_path
+            im_in = im_erica_l if is_erica_left else im_erica_r
 
-            im_orig_in = im_erica_l if is_erica_left else im_erica_r
-            scale_w = im_orig_in.shape[0] / imgW
-            scale_h = im_orig_in.shape[1] / imgH
-            im_orig_out = cv2.rectangle(
-                cv2.cvtColor((im_orig_in * 255.0).astype('uint8'), cv2.COLOR_RGB2BGR),
-                (int(bbox[0] * scale_w), int(bbox[1] * scale_h)),
-                (int(bbox[2] * scale_w), int(bbox[3] * scale_h)),
-                (255, 0, 0), 2)
-
+            im_orig_out = overlay_bbox(im_in, bbox, imgW, imgH)
             if is_erica_left:
                 im_erica_l = im_orig_out
             else:
                 im_erica_r = im_orig_out
-        else:
-            im_orig = raw_image[idx].permute(1, 2, 0).numpy()
-            #---- crop bbox overlay
-            # TODO
 
-        li_input = [im_erica_l, im_erica_r] if erica_mode else [im_orig]
+            li_input = [im_erica_l, im_erica_r]
+        else:
+            im_in = raw_image[idx].permute(1, 2, 0).numpy()
+            li_input = [overlay_bbox(im_in, bbox, imgW, imgH)]
 
         #---- crop image
         crop_images_cpu = crop_images.cpu()
