@@ -253,7 +253,9 @@ class MriDataset(Dataset):
 import os
 import glob
 from typing import Dict
+
 import random
+random.seed(42)
 
 def build_dataset(datasource: Dict[str, str], root="", ext="*.png"):
     datasets = {}
@@ -269,7 +271,7 @@ def build_dataset(datasource: Dict[str, str], root="", ext="*.png"):
     return datasets
 
 
-def _dsp_info(dsp):
+def ls_ds_path(dsp):
     total = 0
     details = []
     for label in dsp.keys():
@@ -284,7 +286,7 @@ def stat_ds_paths(ds_paths):
 
     for phase, dsp in ds_paths.items():
         if phase in ['train', 'test', 'validate']:
-            total, details = _dsp_info(dsp)
+            total, details = ls_ds_path(dsp)
             print(f"@@ lens of ds_paths['{phase}']: total: {total} {details}")
         else:
             raise ValueError(f'unknown ds_paths key: {k}')
@@ -338,8 +340,13 @@ def random_split_ds_path(ds_path, li_lens):
         dsp_0, dsp_12 = _random_split_ds_path(ds_path, [li_lens[0], li_lens[1] + li_lens[2]])
         dsp_1, dsp_2 = _random_split_ds_path(dsp_12, [li_lens[1], li_lens[2]])
         return dsp_0, dsp_1, dsp_2
+    elif c_parts == 4:
+        dsp_0, dsp_123 = _random_split_ds_path(ds_path, [li_lens[0], li_lens[1] + li_lens[2] + li_lens[3]])
+        dsp_1, dsp_23 = _random_split_ds_path(dsp_123, [li_lens[1], li_lens[2] + li_lens[3]])
+        dsp_2, dsp_3 = _random_split_ds_path(dsp_23, [li_lens[2], li_lens[3]])
+        return dsp_0, dsp_1, dsp_2, dsp_3
     else:
-        raise ValueError('@@ Unsupported case: c_parts != 2 && c_parts != 3')
+        raise ValueError('@@ Unsupported case: c_parts != 2 && c_parts != 3 && c_parts != 4')
 #-------- $$
 
 

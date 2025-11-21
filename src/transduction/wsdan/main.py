@@ -133,7 +133,7 @@ def main():
         print(class_names_sorted)
         #ckpt = demo_train(total_epochs, model, ds_paths)
         #====
-        if 1:
+        if 0:
             ds_paths, class_names_sorted = get_mnist_ds_paths(  # mnist 10-class
                 root_train='datasets_vit/pngs/train--sparse',  # 128 samples
                 root_test='datasets_vit/pngs/test--sparse')  # 10 samples
@@ -155,7 +155,7 @@ def main():
 
             demo_test(ckpt, class_names_sorted, model, ds_path_test)
         #====
-        if 0:
+        if 1:
             ds_paths, class_names_sorted = get_mri_ds_paths(
                 #'erica', root='datasets_mri/50-001')  # colab --> 1200
                 'erica', root='datasets_mri/50-001-100')  # debug --> 202

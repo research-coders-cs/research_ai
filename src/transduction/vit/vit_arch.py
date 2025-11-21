@@ -11,7 +11,8 @@ from torchvision import transforms
 
 from .bs1_atten import Bs1Atten
 from ..plot_if import get_confusion_matrix
-from ..vit.vit_torch import stat_ds_paths, get_mri_ds_paths, MriDataset
+from ..vit.vit_torch import stat_ds_paths, get_mri_ds_paths, MriDataset,\
+    ls_ds_path, random_split_ds_path
 
 """
 It’s absolutely possible to customize the model architecture while retaining the
@@ -219,10 +220,13 @@ class CustomMnistDataset(Dataset):
 
 
 class CustomMriDataset(Dataset):
-    def __init__(self, ds_path, _ds=None, ch=230, rh=80):
-        self.ds = _ds if _ds is not None else MriDataset(
+    def __init__(self, ds_path, ch=230, rh=80):
+        self.ds = MriDataset(
             dataset=ds_path,
             transform=CustomMriDataset.get_transform(ch, rh))
+        self.ds_path = ds_path
+        self.ch = ch
+        self.rh = rh
 
     def __len__(self):
         return len(self.ds)
@@ -231,7 +235,8 @@ class CustomMriDataset(Dataset):
         return self.ds[idx]  # pixels, class_index, extra
 
     def random_split(self, li):
-        return [CustomMriDataset(None, _ds=sub) for sub in random_split(self.ds, li)]
+        return [CustomMriDataset(dsp, ch=self.ch, rh=self.rh)
+                for dsp in random_split_ds_path(self.ds_path, li)]
 
     def get_histogram(self, class_names_sorted):
         hg = {label: 0 for label in class_names_sorted}
@@ -332,6 +337,9 @@ def main():
     if val_dataset is not None:
         print(f'val_dataset: {val_dataset.get_histogram(class_names_sorted)}')
     print(f'test_dataset: {test_dataset.get_histogram(class_names_sorted)}')
+
+    if 0:
+        exit()  # !!
 
     ##
 

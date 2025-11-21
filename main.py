@@ -89,13 +89,13 @@ if __name__ == '__main__':
         vit_finetune_main()
         exit()
 
-    if 0:  # arch
+    if 1:  # arch
         from src.transduction.vit.vit_arch import main as vit_arch_main
 
         vit_arch_main()
         exit()
 
-    if 1:  # wsdan (post wsdan-0.3.21)
+    if 0:  # wsdan (post wsdan-0.3.21)
         from src.transduction.wsdan.main import main as wsdan_main
 
         wsdan_main()
