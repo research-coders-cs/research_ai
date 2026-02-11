@@ -7,7 +7,7 @@ from ..net import WSDAN, net_train, net_test
 from .transform import get_transform
 from .utils import mk_artifact_dir, get_device
 
-from numpy import np
+import numpy as np
 
 
 TRAIN_DS_PATH_DEFAULT = build_dataset({
