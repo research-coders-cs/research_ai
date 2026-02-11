@@ -395,7 +395,7 @@ def test(ckpt, class_names_sorted, model=MODEL_DEFAULT, ds_path=TEST_DS_PATH_DEF
     net.to(device)
 
     sp = mk_artifact_dir(f'demo_test_{tag}')
-    results = net_test.test(device, class_names_sorted, net, test_loader, ckpt, savepath=sp,
+    results, cm = net_test.test(device, class_names_sorted, net, test_loader, ckpt, savepath=sp,
                             ch=mri_ch, rh=mri_rh)
     # print('@@ results:', results)
 
@@ -411,6 +411,8 @@ def test(ckpt, class_names_sorted, model=MODEL_DEFAULT, ds_path=TEST_DS_PATH_DEF
         _enable_plot = True  # !!
         print(f'\n\n@@ ======== print_auc(results, plot={_enable_plot}), plot_savepath="{sp}"')
         print_auc(results, len(test_dataset), plot=_enable_plot, plot_savepath=sp)
+        
+    return cm
         
         
 def analyze_cm(cm, class_names=None, note=""):
