@@ -41,7 +41,8 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 def get_confusion_matrix(y_true, y_pred, class_names_sorted):
-    get_confusion_matrix_inner(get_plt(), y_true, y_pred, class_names_sorted)
+    cm = get_confusion_matrix_inner(get_plt(), y_true, y_pred, class_names_sorted)
+    return cm
 
 def get_confusion_matrix_inner(_plt, y_true, y_pred, class_names_sorted):
     cm = confusion_matrix(y_true, y_pred, labels=[i for i in range(len(class_names_sorted))])
@@ -55,3 +56,5 @@ def get_confusion_matrix_inner(_plt, y_true, y_pred, class_names_sorted):
     disp.plot(xticks_rotation=45).figure_.savefig(fname)
     if is_colab():
         plt_imshow(_plt, fname)
+        
+    return cm
