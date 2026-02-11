@@ -1,9 +1,0 @@
-what: an adaptation of the "vit" codebase
-
-https://github.com/BrianPulfer/PapersReimplementations/tree/main/src/cv/vit
-c55f9bb
-
-refs:
-
-- https://medium.com/@brianpulfer/vision-transformers-from-scratch-pytorch-a-step-by-step-guide-96c3313c2e0c
-- https://data-science-blog.com/blog/2021/04/07/multi-head-attention-mechanism/
