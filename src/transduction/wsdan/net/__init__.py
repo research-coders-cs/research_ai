@@ -81,7 +81,7 @@ class WSDAN(nn.Module):
             self.num_features = 512
         elif 'inception' in model:
             # @@ TODO - use `weights=` instead of deprecated `pretrained=`
-            self.features = inception_v3(pretrained=pretrained).get_features_mixed_6e()
+            self.features = models.inception_v3(pretrained=pretrained).get_features_mixed_6e()
             self.num_features = 768
         elif 'vgg' in model:
             # @@ TODO - use `weights=` instead of deprecated `pretrained=`
