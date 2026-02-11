@@ -411,3 +411,71 @@ def test(ckpt, class_names_sorted, model=MODEL_DEFAULT, ds_path=TEST_DS_PATH_DEF
         _enable_plot = True  # !!
         print(f'\n\n@@ ======== print_auc(results, plot={_enable_plot}), plot_savepath="{sp}"')
         print_auc(results, len(test_dataset), plot=_enable_plot, plot_savepath=sp)
+        
+        
+def analyze_cm(cm, class_names=None, note=""):
+    """
+    Analyzes a confusion matrix using only NumPy.
+    Calculates overall accuracy and per-class metrics.
+    """
+    cm = np.array(cm)
+    if cm.ndim != 2 or cm.shape[0] != cm.shape[1]:
+        print("Error: Input must be a square 2D confusion matrix.")
+        return None
+
+    num_classes = cm.shape[0]
+    if class_names is None or len(class_names) != num_classes:
+        class_names = [f'Class {i+1}' for i in range(num_classes)]
+
+    # 1. Overall Accuracy
+    total_samples = np.sum(cm)
+    tp_sum = np.trace(cm)
+    overall_acc = tp_sum / total_samples if total_samples > 0 else 0
+
+    print(note) # such as model name, epoch xx, with dopping etc.
+    
+    print(f"--- Overall Statistics ---")
+    print(f"Total Samples: {total_samples}")
+    print(f"Overall Accuracy: {overall_acc:.4f} ({tp_sum}/{total_samples})\n")
+
+    # 2. Per-Class Calculations (Vectorized)
+    tp = np.diag(cm)
+    fp = np.sum(cm, axis=0) - tp
+    fn = np.sum(cm, axis=1) - tp
+    tn = total_samples - (tp + fp + fn)
+    actual_counts = tp + fn
+
+    # Calculate metrics with division error handling
+    recall = np.divide(tp, (tp + fn), out=np.full(num_classes, np.nan), where=(tp + fn) != 0)
+    precision = np.divide(tp, (tp + fp), out=np.full(num_classes, np.nan), where=(tp + fp) != 0)
+    
+    # F1 Score: 2 * (P * R) / (P + R)
+    f1_denom = precision + recall
+    f1_score = np.divide(2 * precision * recall, f1_denom, 
+                         out=np.full(num_classes, np.nan), 
+                         where=(~np.isnan(f1_denom)) & (f1_denom > 0))
+    
+    sensitivity = np.divide(tp, (tp + fn), out=np.full(num_classes, np.nan), where=(tp + fn) != 0)
+    specificity = np.divide(tn, (tn + fp), out=np.full(num_classes, np.nan), where=(tn + fp) != 0)
+
+    # 3. Print Results in a formatted table style
+    header = f"{'Class':<15} | {'Actual':<8} | {'Recall':<8} | {'Precision':<10} | {'F1-Score':<8}"
+    print(header)
+    print("-" * len(header))
+
+    for i in range(num_classes):
+        r = f"{recall[i]:.4f}" if not np.isnan(recall[i]) else "N/A"
+        p = f"{precision[i]:.4f}" if not np.isnan(precision[i]) else "N/A"
+        f1 = f"{f1_score[i]:.4f}" if not np.isnan(f1_score[i]) else "N/A"
+        
+        print(f"{class_names[i]:<15} | {int(actual_counts[i]):<8} | {r:<8} | {p:<10} | {f1:<8}")
+
+    print("Sensitivity and Specificity per class:")
+    print(f"{'Class':<15} | {'Sensitivity':<12} | {'Specificity':<12}")
+    print("-" * 45)
+    for i in range(num_classes):
+        sens = f"{sensitivity[i]:.4f}" if not np.isnan(sensitivity[i]) else "N/A"
+        spec = f"{specificity[i]:.4f}" if not np.isnan(specificity[i]) else "N/A"
+        
+        print(f"{class_names[i]:<15} | {sens:<12} | {spec:<12}")
+    
