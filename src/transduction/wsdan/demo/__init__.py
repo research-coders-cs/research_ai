@@ -339,13 +339,15 @@ def train(
         ds_paths={'train': TRAIN_DS_PATH_DEFAULT, 'validate': VALIDATE_DS_PATH_DEFAULT},
         mri_ch=230, mri_rh=80):
     return _train(False, total_epochs, model, ds_paths, mk_artifact_dir('demo_train'),
-                  ch=mri_ch, rh=mri_rh)
+                  ch=mri_ch, rh=mri_rh, config_doppler=None)
 
 
 def train_with_doppler(
         total_epochs=TOTAL_EPOCHS_DEFAULT,
         model=MODEL_DEFAULT,
         ds_paths={'train': TRAIN_DS_PATH_DEFAULT, 'validate': VALIDATE_DS_PATH_DEFAULT},
+        mri_ch=230, 
+        mri_rh=80,
         config_doppler={
             'thresh_isec_in_crop': 0.25,  # default
             #'thresh_isec_in_crop': 0.50,
@@ -353,7 +355,7 @@ def train_with_doppler(
             #'thresh_force_doppler_in_crop': True,
         }):
     return _train(True, total_epochs, model, ds_paths, mk_artifact_dir('demo_train_with_doppler'),
-                  config_doppler=config_doppler)
+                  ch=mri_ch, rh=mri_rh, config_doppler=config_doppler)
 
 
 def test(ckpt, class_names_sorted, model=MODEL_DEFAULT, ds_path=TEST_DS_PATH_DEFAULT,
