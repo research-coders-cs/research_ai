@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from ..shim import build_dataset, WsdanDataset
-from ..net import WSDAN, net_train, net_test
+from ..net import WSDAN, net_train, net_test, analyze_cm
 
 from .transform import get_transform
 from .utils import mk_artifact_dir, get_device
