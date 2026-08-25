@@ -373,36 +373,16 @@ def main():
         #print(train_dataset[0])  # ok
     #==== mode -- dao
     if 1:
-        #==== REF
-        # from ..vit.vit_torch import get_mnist_ds_paths
-        # ds_paths, class_names_sorted = get_mnist_ds_paths(  # mnist 10-class
-        #     root_train='datasets_vit/pngs/train--sparse',  # 128 samples
-        #     root_test='datasets_vit/pngs/test--sparse')  # 10 samples
-        #==== ok
         from ..vit.vit_torch import get_dao_ds_paths
         ds_paths, class_names_sorted = get_dao_ds_paths(  # dao 9-class
             root='datasets_dao', exts=(".png", ".jpg"))  # 7673 samples
-        #====
 
         stat_ds_paths(ds_paths)
 
-        #==== REF -- raw
-        # dsp_all = ds_paths['train']
-        # total, _ = ls_ds_path(dsp_all)
-        # print(total)  # 7673
-        #
-        # dsp_train, dsp_val, dsp_test, _ = random_split_ds_path(
-        #     dsp_all, [80, 10, 10, total-100])  # dev/local
-        #
-        # ds_paths_adapted = { 'train': dsp_train, 'validate': dsp_val, 'test': dsp_test }
-        # stat_ds_paths(ds_paths_adapted)
-        #==== CustomDaoDataset
         cdds = CustomDaoDataset(ds_paths['train'])
 
         #train_dataset, val_dataset, test_dataset = cdds.random_split([len(cdds)-200, 100, 100])  # colab
         train_dataset, val_dataset, test_dataset, _ = cdds.random_split([80, 10, 10, len(cdds)-100])
-        #====
-
     #====
 
     print(f'train_dataset: {train_dataset.get_histogram(class_names_sorted)}')
