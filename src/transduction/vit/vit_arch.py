@@ -264,6 +264,46 @@ class CustomMriDataset(Dataset):
             MriDataset.erica_crop_pil(pil_img, idx_mri_left_right, ch=ch, rh=rh))
 
 
+class CustomDaoDataset(Dataset):
+    def __init__(self, ds_path):
+        self.ds = MriDataset(  # @@ reuse for Dao ok
+            dataset=ds_path,
+            transform=CustomDaoDataset.get_transform())
+        self.ds_path = ds_path
+
+    def __len__(self):
+        return len(self.ds)
+
+    def __getitem__(self, idx):
+        return self.ds[idx]  # pixels, class_index, extra
+
+    def random_split(self, li):
+        return [CustomDaoDataset(dsp)
+                for dsp in random_split_ds_path(self.ds_path, li)]
+
+    def get_histogram(self, class_names_sorted):
+        hg = {label: 0 for label in class_names_sorted}
+        for item in self.ds:
+            label = item[2]['label']
+            hg[label] += 1
+
+        total = sum(hg.values())
+        if total != len(self):
+            print(f'histogram WARNING: sum(={total}) and len(={len(self)}) do not agree!')
+        return f'total={total} {hg}'
+
+    @staticmethod
+    def get_transform():
+        processor = CustomViT.get_image_processor()
+        #print('@@ processor:', processor)
+
+        return transforms.Compose([
+            transforms.Resize((processor.size['height'], processor.size['width'])),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=processor.image_mean, std=processor.image_std),
+        ])
+
+
 def main():
 
     print('@@ vit arch !!')
@@ -277,7 +317,7 @@ def main():
 
     ##
 
-    #==== mnist
+    #==== mode -- mnist
     if 0:
         transform = transforms.Compose([
             transforms.Resize((224, 224)),
@@ -315,8 +355,8 @@ def main():
             print('@@ !! train/test dataset shortened')
         else:
             pass  # 60000, 10000  # 100%
-    #==== mri-erica
-    if 1:
+    #==== mode -- mri-erica
+    if 0:
         #ds_paths, class_names_sorted = get_mri_ds_paths('debug')
         ds_paths, class_names_sorted = get_mri_ds_paths('erica', root='datasets_mri/50-001')  # colab
         #ds_paths, class_names_sorted = get_mri_ds_paths('erica', root='datasets_mri/50-001-100')  # debug
@@ -331,6 +371,38 @@ def main():
         train_dataset, val_dataset, test_dataset, _ = cmds.random_split([80, 10, 10, len(cmds)-100])
 
         #print(train_dataset[0])  # ok
+    #==== mode -- dao
+    if 1:
+        #==== REF
+        # from ..vit.vit_torch import get_mnist_ds_paths
+        # ds_paths, class_names_sorted = get_mnist_ds_paths(  # mnist 10-class
+        #     root_train='datasets_vit/pngs/train--sparse',  # 128 samples
+        #     root_test='datasets_vit/pngs/test--sparse')  # 10 samples
+        #==== ok
+        from ..vit.vit_torch import get_dao_ds_paths
+        ds_paths, class_names_sorted = get_dao_ds_paths(  # dao 9-class
+            root='datasets_dao', exts=(".png", ".jpg"))  # 7673 samples
+        #====
+
+        stat_ds_paths(ds_paths)
+
+        #==== REF -- raw
+        # dsp_all = ds_paths['train']
+        # total, _ = ls_ds_path(dsp_all)
+        # print(total)  # 7673
+        #
+        # dsp_train, dsp_val, dsp_test, _ = random_split_ds_path(
+        #     dsp_all, [80, 10, 10, total-100])  # dev/local
+        #
+        # ds_paths_adapted = { 'train': dsp_train, 'validate': dsp_val, 'test': dsp_test }
+        # stat_ds_paths(ds_paths_adapted)
+        #==== CustomDaoDataset
+        cdds = CustomDaoDataset(ds_paths['train'])
+
+        #train_dataset, val_dataset, test_dataset = cdds.random_split([len(cdds)-200, 100, 100])  # colab
+        train_dataset, val_dataset, test_dataset, _ = cdds.random_split([80, 10, 10, len(cdds)-100])
+        #====
+
     #====
 
     print(f'train_dataset: {train_dataset.get_histogram(class_names_sorted)}')
@@ -338,7 +410,7 @@ def main():
         print(f'val_dataset: {val_dataset.get_histogram(class_names_sorted)}')
     print(f'test_dataset: {test_dataset.get_histogram(class_names_sorted)}')
 
-    if 0:
+    if 1:
         exit()  # !!
 
     ##

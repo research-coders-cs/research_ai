@@ -257,20 +257,26 @@ from typing import Dict
 import random
 random.seed(42)
 
-def build_dataset(datasource: Dict[str, str], root="", ext="*.png"):
+
+def build_dataset(datasource: Dict[str, any], root="", exts=(".png",)):
     datasets = {}
     for key in datasource:
-        if isinstance(datasource[key], list):
-            files = []
-            for path in datasource[key]:
-                files += glob.glob(os.path.join(root, path, ext))
-            datasets[key] = files
-        else:
-            datasets[key] = glob.glob(os.path.join(root, datasource[key], ext))
+        # Ensure datasource[key] is always treated as a list of paths
+        paths = (
+            datasource[key]
+            if isinstance(datasource[key], list)
+            else [datasource[key]]
+        )
+
+        files = []
+        for path in paths:
+            for ext in exts:
+                # Search for each extension and add to the files list
+                files.extend(glob.glob(os.path.join(root, path, f"*{ext}")))
+
+        datasets[key] = files
 
     return datasets
-
-
 def ls_ds_path(dsp):
     total = 0
     details = []
@@ -634,6 +640,16 @@ class MriViT(nn.Module):
         super(MriViT, self).load_state_dict(model_dict)
 
 #-------- ^^ loaders
+def get_dao_ds_paths(root='datasets_dao', exts=(".png", ".jpg")):
+    dirs = ['moon', 'mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune']
+    class_dir_map = { f'{y}': f'{y}' for y in dirs }
+    ds_paths = {
+        'train': build_dataset(class_dir_map, root=root, exts=exts),
+    }
+
+    return ds_paths, sorted(class_dir_map.keys())
+
+
 def get_mnist_ds_paths(root_train='datasets_vit/pngs/train', root_test='datasets_vit/pngs/test'):
     class_dir_map = { f'mnist_{y}': f'y_{y}' for y in range(10) }
     ds_paths = {
