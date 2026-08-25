@@ -390,7 +390,7 @@ def main():
         print(f'val_dataset: {val_dataset.get_histogram(class_names_sorted)}')
     print(f'test_dataset: {test_dataset.get_histogram(class_names_sorted)}')
 
-    if 1:
+    if 0:
         exit()  # !!
 
     ##
@@ -406,13 +406,15 @@ def main():
     device = torch.device(device_str)
 
     #model = CustomViT(num_classes=10, num_hidden_layers=4).to(device)  # mnist
-    model = CustomViT(num_classes=4, num_hidden_layers=12).to(device)  # erica
+    #model = CustomViT(num_classes=4, num_hidden_layers=12).to(device)  # erica
+    model = CustomViT(num_classes=9, num_hidden_layers=12).to(device)  # dao
 
     # MODEL_PATH = "custom_vit_mnist.pth"
     #MODEL_PATH = "custom_vit_mnist--10pct-8eps.pth"  # 10% of full size
     #MODEL_PATH = "custom_vit_erica--train90test10-1eps.pth"
     #MODEL_PATH = "custom_vit_erica_colab_8eps.pth"  # full: [1100, 100]
-    MODEL_PATH = "custom_vit_erica_colab_20eps.pth"  # full: [1100, 100], latest (@@ torch.__version__: 2.6.0+cu124)
+    #MODEL_PATH = "custom_vit_erica_colab_20eps.pth"  # full: [1100, 100], latest (@@ torch.__version__: 2.6.0+cu124)
+    MODEL_PATH = "custom_vit_dao--train90test10-1eps.pth"
 
     #raise Exception("!!!! ok")
 
@@ -451,11 +453,11 @@ def main():
     y_true = None
     y_pred = None
 
-    if 0:
+    if 1:
         print(f"Testing with `test_dataloader`...")
         y_true, y_pred = model.custom_test(device, test_dataloader)
         get_confusion_matrix(y_true, y_pred, class_names_sorted)
-        #exit()  # !!
+        exit()  # !!
 
     if 1:
         import os
