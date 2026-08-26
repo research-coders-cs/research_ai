@@ -202,6 +202,8 @@ class MriDataset(Dataset):
         #     transformed = self.transform(tens)
         #     #print(f'@@ [preprocessing] {tens.shape} -> {transformed.shape}')
         #====
+        # img = Image.open(path).convert('RGB')
+        # the pixel data is identical whether the source was PNG or JPG
         if path.endswith('?erica=l'):
             transformed = self.transform(
                 pil_image_open(path.replace('?erica=l', '')).convert('RGB'), 0)

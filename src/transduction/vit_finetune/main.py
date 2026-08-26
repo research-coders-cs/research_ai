@@ -268,7 +268,12 @@ def verify_attentions(model, testds, verify_sample_size=-1, y_true=None, y_pred=
         #---- Resolve `im_orig`
 
         #print(f'@@ testds[{idx}]: path={input_path}')
-        im_input = plt.imread(input_path.split('?')[0])  # ndarray
+        #==== NG -- "works" for only PNG
+        # im_input = plt.imread(input_path.split('?')[0])  # ndarray
+        #==== OK -- the pixel data is identical whether the source was PNG or JPG
+        img = Image.open(input_path.split('?')[0]).convert("RGB")  # always RGB, no alpha
+        im_input = np.asarray(img, dtype=np.float32) / 255.0  # always float [0, 1]
+        #====
         #plt_imshow(plt, im_input)
 
         erica_mode = 'erica=' in input_path
