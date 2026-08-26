@@ -121,15 +121,16 @@ def crop_erica_tensor(et, ch=230, rh=80):
 #-------- $$ @@
 
 #-------- ^^ @@
-def patches_show(plt, patches, idx, n_patches_hw, img_hw):
-    patches_plot(plt, patches, idx, n_patches_hw, img_hw)
+def patches_show(plt, patches, idx, n_patches_hw, img_hw, path=''):
+    patches_plot(plt, patches, idx, n_patches_hw, img_hw, path=path)
     plt.show()
 
-def patches_savefig(plt, fpath, patches, idx, n_patches_hw, img_hw):
-    patches_plot(plt, patches, idx, n_patches_hw, img_hw)
-    plt.savefig(fpath, bbox_inches='tight')
+def patches_savefig(plt, fpath, patches, idx, n_patches_hw, img_hw, path=''):
+    patches_plot(plt, patches, idx, n_patches_hw, img_hw, path=path)
+    # plt.savefig(fpath, bbox_inches='tight')
+    plt.savefig(fpath)
 
-def patches_plot(plt, patches, idx, n_patches_hw, img_hw):
+def patches_plot(plt, patches, idx, n_patches_hw, img_hw, path=''):
     fig = plt.figure()
     rows, cols = n_patches_hw
     patch_h = int(img_hw[0] / n_patches_hw[0])
@@ -143,7 +144,8 @@ def patches_plot(plt, patches, idx, n_patches_hw, img_hw):
         img = torch.stack([torch.reshape(img, (patch_h, patch_w))], dim=0)
         plt.imshow(img.permute(1, 2, 0), cmap='gray')
 
-    fig.suptitle(f'# of patches: {rows * cols} (={rows}x{cols})\n'
+    fig.suptitle(f'path: {path}\n'
+                 f'# of patches: {rows * cols} (={rows}x{cols}) | '
                  f'patch size: {patch_h * patch_w}(={patch_h}x{patch_w})')
 
     plt.axis('off')
