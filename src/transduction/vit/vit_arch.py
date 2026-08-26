@@ -218,6 +218,28 @@ class CustomMnistDataset(Dataset):
 
         return image, label
 
+#----^^ commons: CustomMriDataset / CustomDaoDataset
+def get_histogram(self_ds, self_len, class_names_sorted):
+    hg = {label: 0 for label in class_names_sorted}
+    for item in self_ds:
+        label = item[2]['label']
+        hg[label] += 1
+
+    total = sum(hg.values())
+    if total != self_len:
+        print(f'histogram WARNING: sum(={total}) and len(={self_len}) do not agree!')
+    return f'total={total} {hg}'
+
+
+def get_transform():
+    processor = CustomViT.get_image_processor()
+    return transforms.Compose([
+        transforms.Resize((processor.size['height'], processor.size['width'])),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=processor.image_mean, std=processor.image_std),
+    ])
+#----$$
+
 
 class CustomMriDataset(Dataset):
     def __init__(self, ds_path, ch=230, rh=80):
@@ -239,27 +261,11 @@ class CustomMriDataset(Dataset):
                 for dsp in random_split_ds_path(self.ds_path, li)]
 
     def get_histogram(self, class_names_sorted):
-        hg = {label: 0 for label in class_names_sorted}
-        for item in self.ds:
-            label = item[2]['label']
-            hg[label] += 1
-
-        total = sum(hg.values())
-        if total != len(self):
-            print(f'histogram WARNING: sum(={total}) and len(={len(self)}) do not agree!')
-        return f'total={total} {hg}'
+        return get_histogram(self.ds, len(self), class_names_sorted)
 
     @staticmethod
     def get_transform(ch, rh):
-        processor = CustomViT.get_image_processor()
-        #print('@@ processor:', processor)
-
-        transf_inner = transforms.Compose([
-            transforms.Resize((processor.size['height'], processor.size['width'])),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=processor.image_mean, std=processor.image_std),
-        ])
-
+        transf_inner = get_transform()
         return lambda pil_img, idx_mri_left_right : transf_inner(
             MriDataset.erica_crop_pil(pil_img, idx_mri_left_right, ch=ch, rh=rh))
 
@@ -268,7 +274,7 @@ class CustomDaoDataset(Dataset):
     def __init__(self, ds_path):
         self.ds = MriDataset(  # @@ reuse for Dao ok
             dataset=ds_path,
-            transform=CustomDaoDataset.get_transform())
+            transform=get_transform())
         self.ds_path = ds_path
 
     def __len__(self):
@@ -282,26 +288,7 @@ class CustomDaoDataset(Dataset):
                 for dsp in random_split_ds_path(self.ds_path, li)]
 
     def get_histogram(self, class_names_sorted):
-        hg = {label: 0 for label in class_names_sorted}
-        for item in self.ds:
-            label = item[2]['label']
-            hg[label] += 1
-
-        total = sum(hg.values())
-        if total != len(self):
-            print(f'histogram WARNING: sum(={total}) and len(={len(self)}) do not agree!')
-        return f'total={total} {hg}'
-
-    @staticmethod
-    def get_transform():
-        processor = CustomViT.get_image_processor()
-        #print('@@ processor:', processor)
-
-        return transforms.Compose([
-            transforms.Resize((processor.size['height'], processor.size['width'])),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=processor.image_mean, std=processor.image_std),
-        ])
+        return get_histogram(self.ds, len(self), class_names_sorted)
 
 
 def main():
@@ -418,7 +405,7 @@ def main():
 
     #raise Exception("!!!! ok")
 
-    if 1:  # do training?
+    if 0:  # do training?
         optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-2)
         loss_fn = nn.CrossEntropyLoss()
 
@@ -457,17 +444,21 @@ def main():
         print(f"Testing with `test_dataloader`...")
         y_true, y_pred = model.custom_test(device, test_dataloader)
         get_confusion_matrix(y_true, y_pred, class_names_sorted)
-        exit()  # !!
+        #exit()  # !!
 
     if 1:
         import os
         from ..vit_finetune.main import verify_attentions
 
-        attn_dir = 'inference_attention_arch'
+        #attn_dir = 'inference_attention_arch'
+        attn_dir = 'inference_attention_arch_dao'
+
         if not os.path.exists(attn_dir):
             os.makedirs(attn_dir, exist_ok=True)
 
-        verify_sample_size = 5
+        # verify_sample_size = 5
+        verify_sample_size = 10  # !!!!
+
         print(f'Verifying first {verify_sample_size} samples of {len(test_dataloader_bs1)}')
 
         verify_attentions(model, test_dataloader_bs1, verify_sample_size,
