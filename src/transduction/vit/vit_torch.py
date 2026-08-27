@@ -121,16 +121,18 @@ def crop_erica_tensor(et, ch=230, rh=80):
 #-------- $$ @@
 
 #-------- ^^ @@
-def patches_show(plt, patches, idx, n_patches_hw, img_hw, path=''):
-    patches_plot(plt, patches, idx, n_patches_hw, img_hw, path=path)
+import cv2
+
+def patches_show(plt, patches, idx, n_patches_hw, img_hw, title=''):
+    patches_plot(plt, patches, idx, n_patches_hw, img_hw, title=title)
     plt.show()
 
-def patches_savefig(plt, fpath, patches, idx, n_patches_hw, img_hw, path=''):
-    patches_plot(plt, patches, idx, n_patches_hw, img_hw, path=path)
+def patches_savefig(plt, fpath, patches, idx, n_patches_hw, img_hw, title=''):
+    patches_plot(plt, patches, idx, n_patches_hw, img_hw, title=title)
     # plt.savefig(fpath, bbox_inches='tight')
     plt.savefig(fpath)
 
-def patches_plot(plt, patches, idx, n_patches_hw, img_hw, path=''):
+def patches_plot(plt, patches, idx, n_patches_hw, img_hw, title=''):
     fig = plt.figure()
     rows, cols = n_patches_hw
     patch_h = int(img_hw[0] / n_patches_hw[0])
@@ -144,12 +146,37 @@ def patches_plot(plt, patches, idx, n_patches_hw, img_hw, path=''):
         img = torch.stack([torch.reshape(img, (patch_h, patch_w))], dim=0)
         plt.imshow(img.permute(1, 2, 0), cmap='gray')
 
-    fig.suptitle(f'path: {path}\n'
+    fig.suptitle(f'{title}\n'
                  f'# of patches: {rows * cols} (={rows}x{cols}) | '
                  f'patch size: {patch_h * patch_w}(={patch_h}x{patch_w})')
 
     plt.axis('off')
     plt.setp(axes, xticks=[], yticks=[])  # https://stackoverflow.com/questions/25124143/get-rid-of-tick-labels-for-all-subplots/25127092#25127092
+
+def plot_vit_patches(input_path, title, save_path):
+    # NOTE: hardcoded for now -- n_patches_hw, img_hw: (14, 14), (224, 224)
+
+    # PNG/JPG compat
+    img = Image.open(input_path).convert("RGB")  # always RGB, no alpha
+    im = np.asarray(img, dtype=np.float32) / 255.0  # always float [0, 1]
+    im = cv2.resize(im, (224, 224))
+    # print('@@ im.shape:', im.shape)  # (224, 224, 3)
+
+    if len(im.shape) == 2:
+        tens = torch.tensor([im[:,:]], dtype=torch.float32)  # grayscale
+    else:
+        tens = torch.tensor([im[:,:,0]], dtype=torch.float32)  # extract R channel as tensor
+    # print('@@ tens.shape:', tens.shape)  # torch.Size([1, 224, 224])
+
+    tens_stacked = torch.stack([tens], dim=0)
+    # print('@@ tens_stacked.shape:', tens_stacked.shape)  # torch.Size([1, 1, 224, 224])
+
+    patches = patchify_mri(tens_stacked, (14, 14))
+    # print('@@ patches.shape:', patches.shape)  # torch.Size([1, 196, 256])
+
+    idx_stack = 0
+    #patches_show(plt, patches, idx_stack, (14, 14), (224, 224))
+    patches_savefig(plt, save_path, patches, idx_stack, (14, 14), (224, 224), title=title)
 #-------- $$
 
 #-------- ^^ @@

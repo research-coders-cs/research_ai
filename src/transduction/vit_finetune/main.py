@@ -39,7 +39,7 @@ transform_to_pil = ToPILImage()
 transform_to_tensor = PILToTensor()
 
 from .attention import plot_attention, plot_attention_heads
-from ..vit.vit_torch import MriDataset
+from ..vit.vit_torch import MriDataset, plot_vit_patches
 import cv2
 #----
 

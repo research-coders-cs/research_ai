@@ -296,40 +296,14 @@ def main():
     print('@@ vit arch !!')
 
     if 1:  # debug
-        from PIL import Image
-        import numpy as np
-        import cv2
-        from ..vit.vit_torch import patchify_mri, patches_show, patches_savefig
-        from ..plot_if import get_plt  #, plt_imshow, plt_imshow_tensor
-        plt = get_plt()
+        from ..vit.vit_torch import plot_vit_patches
 
         input_path = 'datasets_dao/mars/mars_1111.png'
-
-        # PNG/JPG compat
-        img = Image.open(input_path).convert("RGB")  # always RGB, no alpha
-        im = np.asarray(img, dtype=np.float32) / 255.0  # always float [0, 1]
-        im = cv2.resize(im, (224, 224))
-        print('@@ im.shape:', im.shape)  # (224, 224, 3)
-
-        if len(im.shape) == 2:
-            tens = torch.tensor([im[:,:]], dtype=torch.float32)  # grayscale
-        else:
-            tens = torch.tensor([im[:,:,0]], dtype=torch.float32)  # extract R channel as tensor
-        print('@@ tens.shape:', tens.shape)  # torch.Size([1, 224, 224])
-
-        tens_stacked = torch.stack([tens], dim=0)
-        print('@@ tens_stacked.shape:', tens_stacked.shape)  # torch.Size([1, 1, 224, 224])
-
-        patches = patchify_mri(tens_stacked, (14, 14))
-        print('@@ patches.shape:', patches.shape)  # torch.Size([1, 196, 256])
-
         idx = 999
+        title = f'testds[{idx}] | path: {input_path}'
+        save_path = f'vit_patches_{idx}.png'
 
-        idx_stack = 0
-        #patches_show(plt, patches, idx_stack, (14, 14), (224, 224))
-        patches_savefig(plt, f'vit_patches_{idx}.png', patches, idx_stack, (14, 14), (224, 224),
-                        path=input_path)
-
+        plot_vit_patches(input_path, title, save_path)
         exit()
 
     if 0:  # debug
