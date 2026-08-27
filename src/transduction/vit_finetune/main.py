@@ -323,6 +323,10 @@ def verify_attentions(model, testds, verify_sample_size=-1, y_true=None, y_pred=
         plot_attention_heads(heatmaps_headwise, im_heatmap, title,
                 f'{save_dir}/info_testds_{idx}_attention_analysis.png')
 
+        title = f'testds[{idx}] | path: {input_path}'
+        plot_vit_patches(input_path, title,
+                f'{save_dir}/info_testds_{idx}_vit_patches.png')
+
 
 def debug_print_dat(dat):
     print(dat)
