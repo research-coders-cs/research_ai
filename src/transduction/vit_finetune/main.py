@@ -319,12 +319,13 @@ def verify_attentions(model, testds, verify_sample_size=-1, y_true=None, y_pred=
 
 
         title = (f'testds[{idx}] | {num_heads} attention heads\n'
-                 f'(ViT model: {ckpt_file})')
+            f'(ViT model: {ckpt_file})')
         plot_attention_heads(heatmaps_headwise, im_heatmap, title,
-                f'{save_dir}/info_testds_{idx}_attention_analysis.png')
+            f'{save_dir}/info_testds_{idx}_attention_analysis.png')
 
-        title = f'testds[{idx}] | path: {input_path}'
-        plot_vit_patches(input_path, title,
+        if 0:  # !! experimental
+            title = f'testds[{idx}] | path: {input_path}'
+            plot_vit_patches(input_path, title,
                 f'{save_dir}/info_testds_{idx}_vit_patches.png')
 
 
