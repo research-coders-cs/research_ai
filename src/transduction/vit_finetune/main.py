@@ -297,7 +297,7 @@ def verify_attentions(model, testds, verify_sample_size=-1, y_true=None, y_pred=
         heatmaps_headwise = [ Bs1Atten.compute_heatmap(
             input, att_mat, idx, i_head=i_head, im_orig=im_orig)[0] for i_head in range(num_heads) ]
 
-        #---- Display inference debug
+        #---- Display inference info
 
         has_yt = y_true is not None
         has_yp = y_pred is not None
@@ -305,30 +305,37 @@ def verify_attentions(model, testds, verify_sample_size=-1, y_true=None, y_pred=
         ypred = y_pred[idx] if has_yp else None
 
         result = None
+        result_tf = None
         if has_yt and has_yp:
             result = '✅' if ytrue == ypred else '❌'
+            result_tf = ytrue == ypred
 
         if 1 and has_yt and has_yp:  # !!!! info -- confidence
-            print('@@ logits:', logits)
+            # print('@@ logits:', logits)
             ypred_via_logits = logits.argmax(-1)[0].item()
 
             print(f"testds[{idx}]: {result} ytrue: {ytrue} ypred: {ypred} ypred_via_logits: {ypred_via_logits}")
             assert ypred == ypred_via_logits
+            print('  logits:', logits)  # TODO !! probs
 
         #-- info -- basic
-        title = (f'testds[{idx}] | attention_mask | attention_ave ({num_heads} heads)\n'
+        title = (f'testds[{idx}] | attention_mask | attention_ave (of {num_heads} heads)\n'
                  f'(path: {input_path})\n'
-                 f'(ytrue: {ytrue} ypred: {ypred} result: {result})\n'
-                 f'(ViT model: {ckpt_file})')
+                 f'(ViT model: {ckpt_file})\n'
+                 f'(ytrue: {ytrue} ({}) ypred: {ypred} ({}) result: {result_tf})')
         ims = [im_erica_l, im_erica_r, im_mask, im_heatmap] if erica_mode\
             else [im_orig, im_mask, im_heatmap]
-        plot_attention(ims, title, f'{save_dir}/info_testds_{idx}.png')
+        plot_attention(ims, title, f'{save_dir}/info_testds_{idx}_result_{result_tf}.png')
 
         #-- info -- attention heads
         title = (f'testds[{idx}] | {num_heads} attention heads\n'
             f'(ViT model: {ckpt_file})')
         plot_attention_heads(heatmaps_headwise, im_heatmap, title,
-            f'{save_dir}/info_testds_{idx}_attention_analysis.png')
+            f'{save_dir}/info_testds_{idx}_attention_heads.png')
+
+        #-- info -- attention ave
+        # TODO !!!!!!!!
+        #     f'{save_dir}/info_testds_{idx}_attention_ave.png')
 
         #-- info -- ViT patches
         if 0:  # !! experimental
