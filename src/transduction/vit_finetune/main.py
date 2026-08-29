@@ -299,34 +299,48 @@ def verify_attentions(model, testds, verify_sample_size=-1, y_true=None, y_pred=
 
         #---- Display inference debug
 
-        if erica_mode:
-            ytrue = y_true[idx] if y_true is not None else None
-            ypred = y_pred[idx] if y_pred is not None else None
-            result = ytrue == ypred if (ytrue is not None and ypred is not None) else None
-            title = (f'testds[{idx}] (erica_[l,r]) | attention_mask | attention_ave (across {num_heads} attention heads)\n'
-                     f'(path: {input_path})\n'
-                     f'(ytrue: {ytrue} ypred: {ypred} inference result: {result})\n'
-                     f'(ViT model: {ckpt_file})')
+        has_yt = y_true is not None
+        has_yp = y_pred is not None
+        ytrue = y_true[idx] if has_yt else None
+        ypred = y_pred[idx] if has_yp else None
 
-            plot_attention([im_erica_l, im_erica_r, im_mask, im_heatmap], title,
-                f'{save_dir}/info_testds_{idx}_result_{result}.png')
-        else:
-            title = (f'testds[{idx}] | attention_mask | attention_ave (across {num_heads} attention heads)\n'
-                     f'(path: {input_path})\n'
-                     f'(ViT model: {ckpt_file})')
-            plot_attention([im_orig, im_mask, im_heatmap], title,
-                f'{save_dir}/attention_debug_{idx}_{ckpt_file}.png')
+        result = None
+        if has_yt and has_yp:
+            result = '✅' if ytrue == ypred else '❌'
 
+        if 1 and has_yt and has_yp:  # !!!! info -- confidence
+            print('@@ logits:', logits)
+            ypred_via_logits = logits.argmax(-1)[0].item()
 
+            print(f"testds[{idx}]: {result} ytrue: {ytrue} ypred: {ypred} ypred_via_logits: {ypred_via_logits}")
+            assert ypred == ypred_via_logits
+
+        #-- info -- basic
+        title = (f'testds[{idx}] | attention_mask | attention_ave ({num_heads} heads)\n'
+                 f'(path: {input_path})\n'
+                 f'(ytrue: {ytrue} ypred: {ypred} result: {result})\n'
+                 f'(ViT model: {ckpt_file})')
+        ims = [im_erica_l, im_erica_r, im_mask, im_heatmap] if erica_mode\
+            else [im_orig, im_mask, im_heatmap]
+        plot_attention(ims, title, f'{save_dir}/info_testds_{idx}.png')
+
+        #-- info -- attention heads
         title = (f'testds[{idx}] | {num_heads} attention heads\n'
             f'(ViT model: {ckpt_file})')
         plot_attention_heads(heatmaps_headwise, im_heatmap, title,
             f'{save_dir}/info_testds_{idx}_attention_analysis.png')
 
+        #-- info -- ViT patches
         if 0:  # !! experimental
             title = f'testds[{idx}] | path: {input_path}'
             plot_vit_patches(input_path, title,
                 f'{save_dir}/info_testds_{idx}_vit_patches.png')
+            #---- fixme colab warnings [ ]
+            # Verifying first 4 samples of 100
+            # @@ model_class: CustomViT
+            #
+            # /usr/local/lib/python3.13/dist-packages/transduction/vit_finetune/attention.py:82: UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor. (Triggered internally at /pytorch/torch/csrc/utils/tensor_new.cpp:253.)
+            #   mask_stacked = torch.tensor([mask[:,:]], dtype=torch.float32)
 
 
 def debug_print_dat(dat):
