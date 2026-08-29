@@ -301,28 +301,29 @@ def verify_attentions(model, testds, verify_sample_size=-1, y_true=None, y_pred=
 
         has_yt = y_true is not None
         has_yp = y_pred is not None
-        ytrue = y_true[idx] if has_yt else None
-        ypred = y_pred[idx] if has_yp else None
+        yt = y_true[idx] if has_yt else None
+        yp = y_pred[idx] if has_yp else None
 
-        result = None
-        result_tf = None
+        label_yt, label_yp, result, result_tf = None, None, None, None
         if has_yt and has_yp:
-            result = '✅' if ytrue == ypred else '❌'
-            result_tf = ytrue == ypred
+            label_yt = '!!!!'
+            label_yp = '!!!!'
+            result = '✅' if yt == yp else '❌'
+            result_tf = yt == yp
 
         if 1 and has_yt and has_yp:  # !!!! info -- confidence
             # print('@@ logits:', logits)
-            ypred_via_logits = logits.argmax(-1)[0].item()
+            yp_via_logits = logits.argmax(-1)[0].item()
 
-            print(f"testds[{idx}]: {result} ytrue: {ytrue} ypred: {ypred} ypred_via_logits: {ypred_via_logits}")
-            assert ypred == ypred_via_logits
+            print(f"testds[{idx}]: {result} ytrue: {yt} ypred: {yp} yp_via_logits: {yp_via_logits}")
+            assert yp == yp_via_logits
             print('  logits:', logits)  # TODO !! probs
 
         #-- info -- basic
         title = (f'testds[{idx}] | attention_mask | attention_ave (of {num_heads} heads)\n'
                  f'(path: {input_path})\n'
                  f'(ViT model: {ckpt_file})\n'
-                 f'(ytrue: {ytrue} ({}) ypred: {ypred} ({}) result: {result_tf})')
+                 f'(ytrue: {yt} ({label_yt}) ypred: {yp} ({label_yp}) result: {result_tf})')
         ims = [im_erica_l, im_erica_r, im_mask, im_heatmap] if erica_mode\
             else [im_orig, im_mask, im_heatmap]
         plot_attention(ims, title, f'{save_dir}/info_testds_{idx}_result_{result_tf}.png')
