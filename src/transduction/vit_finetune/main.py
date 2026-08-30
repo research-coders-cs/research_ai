@@ -211,7 +211,7 @@ class MriDatasetAdapter(Dataset):
 
 from ..vit.bs1_atten import Bs1Atten
 def verify_attentions(model, testds, verify_sample_size=-1, y_true=None, y_pred=None,
-                      ckpt_file=None, save_dir='inference',
+                      ckpt_file=None, save_dir='inference', class_names_sorted=None,
                       mri_ch=250, mri_rh=80):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -306,24 +306,32 @@ def verify_attentions(model, testds, verify_sample_size=-1, y_true=None, y_pred=
 
         label_yt, label_yp, result, result_tf = None, None, None, None
         if has_yt and has_yp:
-            label_yt = '!!!!'
-            label_yp = '!!!!'
+            #---- labels/result
+            has_labels = class_names_sorted is not None
+            label_yt = class_names_sorted[yt] if has_labels else '-'
+            label_yp = class_names_sorted[yp] if has_labels else '-'
             result = '✅' if yt == yp else '❌'
             result_tf = yt == yp
 
-        if 1 and has_yt and has_yp:  # !!!! info -- confidence
+            #---- logits -> confidence
             # print('@@ logits:', logits)
             yp_via_logits = logits.argmax(-1)[0].item()
-
-            print(f"testds[{idx}]: {result} ytrue: {yt} ypred: {yp} yp_via_logits: {yp_via_logits}")
             assert yp == yp_via_logits
-            print('  logits:', logits)  # TODO !! probs
+
+            confidence = None
+            if has_labels:
+                percents = (torch.softmax(logits, dim=-1) * 100).squeeze().tolist()
+                sorted_preds = sorted(zip(class_names_sorted, percents), key=lambda x: x[1], reverse=True)
+                # print(sorted_preds)
+                confidence = [ f"{name}: {percent:.2f}%" for name, percent in sorted_preds ]
+
+            print(f"testds[{idx}]: {result} ytrue: {yt} (={label_yt}) ypred: {yp} (={label_yp}) confidence: {confidence}")
 
         #-- info -- basic
         title = (f'testds[{idx}] | attention_mask | attention_ave (of {num_heads} heads)\n'
                  f'(path: {input_path})\n'
                  f'(ViT model: {ckpt_file})\n'
-                 f'(ytrue: {yt} ({label_yt}) ypred: {yp} ({label_yp}) result: {result_tf})')
+                 f'(ytrue: {yt} (={label_yt}) ypred: {yp} (={label_yp}) result: {result_tf})')
         ims = [im_erica_l, im_erica_r, im_mask, im_heatmap] if erica_mode\
             else [im_orig, im_mask, im_heatmap]
         plot_attention(ims, title, f'{save_dir}/info_testds_{idx}_result_{result_tf}.png')
