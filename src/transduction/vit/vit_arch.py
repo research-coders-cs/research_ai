@@ -295,13 +295,16 @@ def main():
 
     print('@@ vit arch !!')
 
-    if 1:  # debug
+    if 0:  # debug
         from ..vit.vit_torch import plot_vit_patches
 
-        input_path = 'datasets_dao/mars/mars_1111.png'
+        # input_path = 'datasets_dao/mars/mars_1111.png'
+        # input_path = 'datasets_dao/moon/moon_484.jpg'  # fixme
+        input_path = 'datasets_dao/saturn/saturn_537.png'  # fixme
+
         idx = 999
         title = f'testds[{idx}] | path: {input_path}'
-        save_path = f'vit_patches_{idx}.png'
+        save_path = f'vit_patches_testds_{idx}.png'
 
         plot_vit_patches(input_path, title, save_path)
         exit()
@@ -473,6 +476,7 @@ def main():
 
         verify_attentions(model, test_dataloader_bs1, verify_sample_size,
                           y_true=y_true, y_pred=y_pred,
+                          class_names_sorted=class_names_sorted,
                           ckpt_file=MODEL_PATH, save_dir=attn_dir,
                           mri_ch=250, mri_rh=80)
 
