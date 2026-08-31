@@ -209,10 +209,7 @@ class MriDatasetAdapter(Dataset):
         return {'img': extra['path'], 'label': class_index, 'pixels': px }
 
 
-from ..vit.bs1_atten import Bs1Atten
-def verify_attentions(model, testds, verify_sample_size=-1, y_true=None, y_pred=None,
-                      ckpt_file=None, save_dir='inference', class_names_sorted=None,
-                      mri_ch=250, mri_rh=80):
+def get_bs1_generator(model, testds):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def gen_finetune():
@@ -250,9 +247,15 @@ def verify_attentions(model, testds, verify_sample_size=-1, y_true=None, y_pred=
     else:
         raise ValueError(f'Unsupported model_class: {model_class}')
 
-    #
+    return gen
 
-    for idx, input, input_path, logits, attentions in gen():
+
+from ..vit.bs1_atten import Bs1Atten
+def verify_attentions(model, testds, verify_sample_size=-1, y_true=None, y_pred=None,
+                      class_names_sorted=None, ckpt_file=None, save_dir='inference',
+                      mri_ch=250, mri_rh=80):
+
+    for idx, input, input_path, logits, attentions in get_bs1_generator(model, testds):
         if verify_sample_size >= 0 and verify_sample_size == idx:
             break
 
