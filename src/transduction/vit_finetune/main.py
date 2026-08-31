@@ -304,14 +304,14 @@ def verify_attentions(model, testds, verify_sample_size=-1, y_true=None, y_pred=
         yt = y_true[idx] if has_yt else None
         yp = y_pred[idx] if has_yp else None
 
-        label_yt, label_yp, result, result_tf = None, None, None, None
+        label_yt, label_yp, result, result_str = None, None, None, None
         if has_yt and has_yp:
             #---- labels/result
             has_labels = class_names_sorted is not None
             label_yt = class_names_sorted[yt] if has_labels else '-'
             label_yp = class_names_sorted[yp] if has_labels else '-'
             result = '✅' if yt == yp else '❌'
-            result_tf = yt == yp
+            result_str = 'PASS' if yt == yp else 'FAIL'
 
             #---- logits -> confidence
             # print('@@ logits:', logits)
@@ -326,15 +326,16 @@ def verify_attentions(model, testds, verify_sample_size=-1, y_true=None, y_pred=
                 confidence = [ f"{name}: {percent:.2f}%" for name, percent in sorted_preds ]
 
             print(f"testds[{idx}]: {result} ytrue: {yt} (={label_yt}) ypred: {yp} (={label_yp}) confidence: {confidence}")
+            # WIP !!!! save ans log output !!!!1111
 
         #-- info -- basic
         title = (f'testds[{idx}] | attention_mask | attention_ave (of {num_heads} heads)\n'
-                 f'(path: {input_path})\n'
                  f'(ViT model: {ckpt_file})\n'
-                 f'(ytrue: {yt} (={label_yt}) ypred: {yp} (={label_yp}) result: {result_tf})')
+                 f'(path: {input_path})\n'
+                 f'(ytrue: {yt} (={label_yt}) ypred: {yp} (={label_yp}) test: {result_str})')
         ims = [im_erica_l, im_erica_r, im_mask, im_heatmap] if erica_mode\
             else [im_orig, im_mask, im_heatmap]
-        plot_attention(ims, title, f'{save_dir}/info_testds_{idx}_result_{result_tf}.png')
+        plot_attention(ims, title, f'{save_dir}/info_testds_{idx}_test_{result_str}.png')
 
         #-- info -- attention heads
         title = (f'testds[{idx}] | {num_heads} attention heads\n'
@@ -343,8 +344,7 @@ def verify_attentions(model, testds, verify_sample_size=-1, y_true=None, y_pred=
             f'{save_dir}/info_testds_{idx}_attention_heads.png')
 
         #-- info -- attention ave
-        # TODO !!!!!!!!
-        #     f'{save_dir}/info_testds_{idx}_attention_ave.png')
+        im_heatmap.save(f'{save_dir}/info_testds_{idx}_attention_ave.png')
 
         #-- info -- ViT patches
         if 0:  # !! experimental
