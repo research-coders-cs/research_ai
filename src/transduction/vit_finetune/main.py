@@ -254,8 +254,10 @@ from ..vit.bs1_atten import Bs1Atten
 def verify_attentions(model, testds, verify_sample_size=-1, y_true=None, y_pred=None,
                       class_names_sorted=None, ckpt_file=None, save_dir='inference',
                       mri_ch=250, mri_rh=80):
+    log_lines = []
 
-    for idx, input, input_path, logits, attentions in get_bs1_generator(model, testds):
+    gen = get_bs1_generator(model, testds)
+    for idx, input, input_path, logits, attentions in gen():
         if verify_sample_size >= 0 and verify_sample_size == idx:
             break
 
@@ -328,8 +330,9 @@ def verify_attentions(model, testds, verify_sample_size=-1, y_true=None, y_pred=
                 # print(sorted_preds)
                 confidence = [ f"{name}: {percent:.2f}%" for name, percent in sorted_preds ]
 
-            print(f"testds[{idx}]: {result} ytrue: {yt} (={label_yt}) ypred: {yp} (={label_yp}) confidence: {confidence}")
-            # WIP !!!! save ans log output !!!!1111
+            line = f"testds[{idx}]: {result} ytrue: {yt} (={label_yt}) ypred: {yp} (={label_yp}) confidence: {confidence}"
+            print(line)
+            log_lines.append(line)
 
         #-- info -- basic
         title = (f'testds[{idx}] | attention_mask | attention_ave (of {num_heads} heads)\n'
@@ -360,6 +363,10 @@ def verify_attentions(model, testds, verify_sample_size=-1, y_true=None, y_pred=
             #
             # /usr/local/lib/python3.13/dist-packages/transduction/vit_finetune/attention.py:82: UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor. (Triggered internally at /pytorch/torch/csrc/utils/tensor_new.cpp:253.)
             #   mask_stacked = torch.tensor([mask[:,:]], dtype=torch.float32)
+
+    log_path = f'{save_dir}_log.txt'
+    with open(log_path, "a", encoding="utf-8") as f:
+        f.write("\n".join(log_lines) + "\n")
 
 
 def debug_print_dat(dat):
