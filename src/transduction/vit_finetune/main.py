@@ -341,22 +341,22 @@ def verify_attentions(model, testds, verify_sample_size=-1, y_true=None, y_pred=
                  f'(ytrue: {yt} (={label_yt}) ypred: {yp} (={label_yp}) test: {result_str})')
         ims = [im_erica_l, im_erica_r, im_mask, im_heatmap] if erica_mode\
             else [im_orig, im_mask, im_heatmap]
-        plot_attention(ims, title, f'{save_dir}/info_testds_{idx}_test_{result_str}.png')
+        plot_attention(ims, title, f'{save_dir}/testds_{idx}_test_{result_str}.png')
 
         #-- info -- attention heads
         title = (f'testds[{idx}] | {num_heads} attention heads\n'
             f'(ViT model: {ckpt_file})')
         plot_attention_heads(heatmaps_headwise, im_heatmap, title,
-            f'{save_dir}/info_testds_{idx}_attention_heads.png')
+            f'{save_dir}/testds_{idx}_attention_heads.png')
 
         #-- info -- attention ave
-        im_heatmap.save(f'{save_dir}/info_testds_{idx}_attention_ave.png')
+        im_heatmap.save(f'{save_dir}/testds_{idx}_attention_ave.png')
 
         #-- info -- ViT patches
         if 0:  # !! experimental
             title = f'testds[{idx}] | path: {input_path}'
             plot_vit_patches(input_path, title,
-                f'{save_dir}/info_testds_{idx}_vit_patches.png')
+                f'{save_dir}/testds_{idx}_vit_patches.png')
             #---- fixme colab warnings [ ]
             # Verifying first 4 samples of 100
             # @@ model_class: CustomViT
@@ -365,7 +365,7 @@ def verify_attentions(model, testds, verify_sample_size=-1, y_true=None, y_pred=
             #   mask_stacked = torch.tensor([mask[:,:]], dtype=torch.float32)
 
     log_path = f'{save_dir}_log.txt'
-    with open(log_path, "a", encoding="utf-8") as f:
+    with open(log_path, "w", encoding="utf-8") as f:
         f.write("\n".join(log_lines) + "\n")
 
 
